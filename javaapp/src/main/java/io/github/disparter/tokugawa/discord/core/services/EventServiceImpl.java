@@ -5,16 +5,20 @@ import io.github.disparter.tokugawa.discord.core.models.Event.EventType;
 import io.github.disparter.tokugawa.discord.core.models.GameCalendar.Season;
 import io.github.disparter.tokugawa.discord.core.models.NPC;
 import io.github.disparter.tokugawa.discord.core.models.Player;
+import io.github.disparter.tokugawa.discord.core.models.Progress;
 import io.github.disparter.tokugawa.discord.core.models.Relationship;
 import io.github.disparter.tokugawa.discord.core.models.Relationship.RelationshipStatus;
 import io.github.disparter.tokugawa.discord.core.repositories.EventRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.NPCRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.PlayerRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.ProgressRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +31,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class EventServiceImpl implements EventService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
     private final EventRepository eventRepository;
     private final PlayerRepository playerRepository;
@@ -99,13 +105,11 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Event findById(Long id) {
-        // Placeholder implementation
         return eventRepository.findById(id).orElse(null);
     }
 
     @Override
     public List<Event> getAllEvents() {
-        // Placeholder implementation
         List<Event> events = new ArrayList<>();
         eventRepository.findAll().forEach(events::add);
         return events;
@@ -128,6 +132,252 @@ public class EventServiceImpl implements EventService {
         return availableEvents;
     }
 
+    @Override
+    public List<Event> getAvailableEventsForPlayerByType(Long playerId, EventType type) {
+        List<Event> allEvents = eventRepository.findByType(type);
+        List<Event> availableEvents = new ArrayList<>();
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        for (Event event : allEvents) {
+            if (isEventAvailableForPlayer(event, player)) {
+                availableEvents.add(event);
+            }
+        }
+
+        return availableEvents;
+    }
+
+    @Override
+    public List<Event> getAvailableSeasonalEventsForPlayer(Long playerId) {
+        Season currentSeason = gameCalendarService.getCurrentSeason();
+        return getAvailableSeasonalEventsForPlayer(playerId, currentSeason);
+    }
+
+    @Override
+    public List<Event> getAvailableSeasonalEventsForPlayer(Long playerId, Season season) {
+        List<Event> seasonalEvents = eventRepository.findByType(EventType.SEASONAL);
+        List<Event> availableEvents = new ArrayList<>();
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        for (Event event : seasonalEvents) {
+            if (isEventAvailableForPlayer(event, player)) {
+                // Additional check for the specific season
+                if (isEventForSeason(event, season)) {
+                    availableEvents.add(event);
+                }
+            }
+        }
+
+        return availableEvents;
+    }
+
+    /**
+     * Checks if an event is for a specific season.
+     *
+     * @param event the event to check
+     * @param season the season
+     * @return true if the event is for the specified season, false otherwise
+     */
+    private boolean isEventForSeason(Event event, Season season) {
+        // Check if the event has seasonal data
+        if (event.getStartMonth() == null || event.getStartDay() == null || 
+            event.getEndMonth() == null || event.getEndDay() == null) {
+            return false;
+        }
+
+        // Determine the season based on the start month
+        int startMonth = event.getStartMonth();
+
+        if (startMonth >= 3 && startMonth <= 5) {
+            return season == Season.SPRING;
+        } else if (startMonth >= 6 && startMonth <= 8) {
+            return season == Season.SUMMER;
+        } else if (startMonth >= 9 && startMonth <= 11) {
+            return season == Season.AUTUMN;
+        } else {
+            return season == Season.WINTER;
+        }
+    }
+
+    @Override
+    public List<Event> checkForRandomEvents(Long playerId) {
+        List<Event> randomEvents = eventRepository.findByType(EventType.RANDOM);
+        List<Event> triggeredEvents = new ArrayList<>();
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        for (Event event : randomEvents) {
+            if (isRandomEventAvailableForPlayer(event, player)) {
+                triggeredEvents.add(event);
+            }
+        }
+
+        return triggeredEvents;
+    }
+
+    @Override
+    public List<Event> checkForActionTriggeredEvents(Long playerId, String actionType, Map<String, Object> actionData) {
+        List<Event> allEvents = getAllEvents();
+        List<Event> triggeredEvents = new ArrayList<>();
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        for (Event event : allEvents) {
+            if (isEventTriggeredByAction(event, player, actionType, actionData)) {
+                triggeredEvents.add(event);
+            }
+        }
+
+        return triggeredEvents;
+    }
+
+    /**
+     * Checks if an event is triggered by a specific player action.
+     *
+     * @param event the event to check
+     * @param player the player
+     * @param actionType the type of action performed
+     * @param actionData additional data about the action
+     * @return true if the event is triggered by the action, false otherwise
+     */
+    private boolean isEventTriggeredByAction(Event event, Player player, String actionType, Map<String, Object> actionData) {
+        // Check if the event has trigger conditions
+        if (event.getTriggerConditions() == null || event.getTriggerConditions().isEmpty()) {
+            return false;
+        }
+
+        // Check if any of the trigger conditions match the action
+        for (String condition : event.getTriggerConditions()) {
+            if (condition.startsWith(actionType + ":")) {
+                // Extract the specific condition after the action type
+                String specificCondition = condition.substring(actionType.length() + 1);
+
+                // Check if the specific condition is met based on the action data
+                if (isSpecificConditionMet(specificCondition, actionData)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if a specific condition is met based on action data.
+     *
+     * @param specificCondition the specific condition to check
+     * @param actionData the action data
+     * @return true if the condition is met, false otherwise
+     */
+    private boolean isSpecificConditionMet(String specificCondition, Map<String, Object> actionData) {
+        // Parse the condition (format: key=value)
+        String[] parts = specificCondition.split("=");
+        if (parts.length != 2) {
+            return false;
+        }
+
+        String key = parts[0];
+        String expectedValue = parts[1];
+
+        // Check if the action data contains the key
+        if (!actionData.containsKey(key)) {
+            return false;
+        }
+
+        // Check if the value matches the expected value
+        Object actualValue = actionData.get(key);
+        return expectedValue.equals(actualValue.toString());
+    }
+
+    @Override
+    public List<Event> checkForStoryTriggeredEvents(Long playerId) {
+        List<Event> allEvents = getAllEvents();
+        List<Event> triggeredEvents = new ArrayList<>();
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        // Get player's progress
+        List<Progress> progressList = progressRepository.findByPlayerId(player.getId());
+
+        for (Event event : allEvents) {
+            if (isEventTriggeredByStoryProgress(event, player, progressList)) {
+                triggeredEvents.add(event);
+            }
+        }
+
+        return triggeredEvents;
+    }
+
+    /**
+     * Checks if an event is triggered by story progress.
+     *
+     * @param event the event to check
+     * @param player the player
+     * @param progressList the player's progress
+     * @return true if the event is triggered by story progress, false otherwise
+     */
+    private boolean isEventTriggeredByStoryProgress(Event event, Player player, List<Progress> progressList) {
+        // Check if the event has trigger conditions
+        if (event.getTriggerConditions() == null || event.getTriggerConditions().isEmpty()) {
+            return false;
+        }
+
+        // Check if any of the trigger conditions match the story progress
+        for (String condition : event.getTriggerConditions()) {
+            if (condition.startsWith("story:")) {
+                // Extract the specific condition after "story:"
+                String specificCondition = condition.substring(6);
+
+                // Check if the specific condition is met based on the player's progress
+                if (isStoryConditionMet(specificCondition, progressList)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if a story condition is met based on player's progress.
+     *
+     * @param specificCondition the specific condition to check
+     * @param progressList the player's progress
+     * @return true if the condition is met, false otherwise
+     */
+    private boolean isStoryConditionMet(String specificCondition, List<Progress> progressList) {
+        // Parse the condition (format: chapter=value)
+        String[] parts = specificCondition.split("=");
+        if (parts.length != 2) {
+            return false;
+        }
+
+        String key = parts[0];
+        String expectedValue = parts[1];
+
+        // Check if the key is "chapter"
+        if (!"chapter".equals(key)) {
+            return false;
+        }
+
+        // Check if the player has completed the specified chapter
+        for (Progress progress : progressList) {
+            if (progress.getChapterId() != null && progress.getChapterId().equals(expectedValue) && 
+                progress.isCompleted()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Checks if an event is available for a player based on various conditions.
      *
@@ -146,10 +396,44 @@ public class EventServiceImpl implements EventService {
                 return isRandomEventAvailableForPlayer(event, player);
             case CHOICE_TRIGGERED:
                 return isChoiceTriggeredEventAvailableForPlayer(event, player);
+            case CLIMACTIC:
+                return isClimacticEventAvailableForPlayer(event, player);
             default:
                 // For other event types, check general conditions
                 return true;
         }
+    }
+
+    /**
+     * Checks if a climactic event is available for a player based on story progress.
+     *
+     * @param event the climactic event to check
+     * @param player the player
+     * @return true if the climactic event is available, false otherwise
+     */
+    private boolean isClimacticEventAvailableForPlayer(Event event, Player player) {
+        // Get player's progress
+        List<Progress> progressList = progressRepository.findByPlayerId(player.getId());
+
+        // Check if the event has trigger conditions
+        if (event.getTriggerConditions() == null || event.getTriggerConditions().isEmpty()) {
+            return false;
+        }
+
+        // Check if all trigger conditions are met
+        for (String condition : event.getTriggerConditions()) {
+            if (condition.startsWith("story:")) {
+                // Extract the specific condition after "story:"
+                String specificCondition = condition.substring(6);
+
+                // Check if the specific condition is met based on the player's progress
+                if (!isStoryConditionMet(specificCondition, progressList)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -300,13 +584,16 @@ public class EventServiceImpl implements EventService {
                 recordRomanceEvent(event, player);
                 break;
             case SEASONAL:
-                // No special handling needed beyond participation
+                recordSeasonalEvent(event, player);
                 break;
             case RANDOM:
-                // No special handling needed beyond participation
+                recordRandomEvent(event, player);
                 break;
             case CHOICE_TRIGGERED:
-                // No special handling needed beyond participation
+                recordChoiceTriggeredEvent(event, player);
+                break;
+            case CLIMACTIC:
+                recordClimacticEvent(event, player);
                 break;
             default:
                 // No special handling needed for other event types
@@ -351,9 +638,83 @@ public class EventServiceImpl implements EventService {
             // Save the relationship
             relationshipService.save(relationship);
 
+            logger.info("Romance event {} triggered for player {} with NPC {}", eventId, player.getId(), npcId);
+
         } catch (NumberFormatException e) {
-            // Ignore
+            logger.error("Error parsing NPC ID from romance event ID: {}", eventId, e);
         }
+    }
+
+    /**
+     * Records a seasonal event for a player.
+     *
+     * @param event the seasonal event
+     * @param player the player
+     */
+    private void recordSeasonalEvent(Event event, Player player) {
+        // Record the event in the player's progress
+        Progress progress = new Progress();
+        progress.setPlayerId(player.getId());
+        progress.setEventId(event.getEventId());
+        progress.setTimestamp(LocalDateTime.now());
+
+        progressRepository.save(progress);
+
+        logger.info("Seasonal event {} triggered for player {}", event.getEventId(), player.getId());
+    }
+
+    /**
+     * Records a random event for a player.
+     *
+     * @param event the random event
+     * @param player the player
+     */
+    private void recordRandomEvent(Event event, Player player) {
+        // Record the event in the player's progress
+        Progress progress = new Progress();
+        progress.setPlayerId(player.getId());
+        progress.setEventId(event.getEventId());
+        progress.setTimestamp(LocalDateTime.now());
+
+        progressRepository.save(progress);
+
+        logger.info("Random event {} triggered for player {}", event.getEventId(), player.getId());
+    }
+
+    /**
+     * Records a choice-triggered event for a player.
+     *
+     * @param event the choice-triggered event
+     * @param player the player
+     */
+    private void recordChoiceTriggeredEvent(Event event, Player player) {
+        // Record the event in the player's progress
+        Progress progress = new Progress();
+        progress.setPlayerId(player.getId());
+        progress.setEventId(event.getEventId());
+        progress.setTimestamp(LocalDateTime.now());
+
+        progressRepository.save(progress);
+
+        logger.info("Choice-triggered event {} triggered for player {}", event.getEventId(), player.getId());
+    }
+
+    /**
+     * Records a climactic event for a player.
+     *
+     * @param event the climactic event
+     * @param player the player
+     */
+    private void recordClimacticEvent(Event event, Player player) {
+        // Record the event in the player's progress
+        Progress progress = new Progress();
+        progress.setPlayerId(player.getId());
+        progress.setEventId(event.getEventId());
+        progress.setTimestamp(LocalDateTime.now());
+
+        progressRepository.save(progress);
+
+        logger.info("Climactic event {} triggered for player {}", event.getEventId(), player.getId());
     }
 
     @Override
@@ -367,15 +728,146 @@ public class EventServiceImpl implements EventService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
 
-        // Process rewards
-        // This is a simplified implementation
+        // Apply event consequences
+        applyEventConsequences(eventId, playerId);
+
+        // Mark the event as completed in the player's progress
+        Progress progress = progressRepository.findByPlayerIdAndEventId(player.getId(), event.getEventId());
+        if (progress != null) {
+            progress.setCompleted(true);
+            progress.setCompletionTimestamp(LocalDateTime.now());
+            progressRepository.save(progress);
+        }
+
+        logger.info("Event {} completed for player {}", event.getEventId(), player.getId());
 
         return event;
     }
 
     @Override
+    @Transactional
+    public Player applyEventConsequences(Long eventId, Long playerId) {
+        Event event = findById(eventId);
+        if (event == null) {
+            throw new IllegalArgumentException("Event not found with ID: " + eventId);
+        }
+
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        // Process rewards based on event type
+        if (event.getRewards() != null && !event.getRewards().isEmpty()) {
+            for (String reward : event.getRewards()) {
+                applyReward(player, reward);
+            }
+        }
+
+        // Save the updated player
+        return playerRepository.save(player);
+    }
+
+    /**
+     * Applies a reward to a player.
+     *
+     * @param player the player
+     * @param reward the reward string (format: type:value)
+     */
+    private void applyReward(Player player, String reward) {
+        String[] parts = reward.split(":");
+        if (parts.length != 2) {
+            logger.warn("Invalid reward format: {}", reward);
+            return;
+        }
+
+        String type = parts[0];
+        String valueStr = parts[1];
+
+        try {
+            switch (type) {
+                case "exp":
+                    int expValue = Integer.parseInt(valueStr);
+                    player.setExp(player.getExp() + expValue);
+                    logger.info("Applied EXP reward of {} to player {}", expValue, player.getId());
+                    break;
+                case "tusd":
+                    int tusdValue = Integer.parseInt(valueStr);
+                    player.setPoints(player.getPoints() + tusdValue);
+                    logger.info("Applied TUSD reward of {} to player {}", tusdValue, player.getId());
+                    break;
+                case "item":
+                    // In a real implementation, this would add the item to the player's inventory
+                    logger.info("Applied item reward of {} to player {}", valueStr, player.getId());
+                    break;
+                case "level":
+                    int levelValue = Integer.parseInt(valueStr);
+                    player.setLevel(player.getLevel() + levelValue);
+                    logger.info("Applied level reward of {} to player {}", levelValue, player.getId());
+                    break;
+                default:
+                    logger.warn("Unknown reward type: {}", type);
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            logger.error("Error parsing reward value: {}", valueStr, e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Event createEvent(Event event) {
+        // Validate the event
+        if (event.getEventId() == null || event.getEventId().isEmpty()) {
+            throw new IllegalArgumentException("Event ID cannot be null or empty");
+        }
+
+        if (event.getName() == null || event.getName().isEmpty()) {
+            throw new IllegalArgumentException("Event name cannot be null or empty");
+        }
+
+        if (event.getType() == null) {
+            throw new IllegalArgumentException("Event type cannot be null");
+        }
+
+        // Check if an event with the same ID already exists
+        if (eventRepository.findByEventId(event.getEventId()).isPresent()) {
+            throw new IllegalArgumentException("Event with ID " + event.getEventId() + " already exists");
+        }
+
+        // Save the event
+        return eventRepository.save(event);
+    }
+
+    @Override
+    @Transactional
+    public Event updateEvent(Event event) {
+        // Validate the event
+        if (event.getId() == null) {
+            throw new IllegalArgumentException("Event ID cannot be null");
+        }
+
+        // Check if the event exists
+        if (!eventRepository.existsById(event.getId())) {
+            throw new IllegalArgumentException("Event with ID " + event.getId() + " does not exist");
+        }
+
+        // Save the event
+        return eventRepository.save(event);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEvent(Long eventId) {
+        // Check if the event exists
+        if (!eventRepository.existsById(eventId)) {
+            throw new IllegalArgumentException("Event with ID " + eventId + " does not exist");
+        }
+
+        // Delete the event
+        eventRepository.deleteById(eventId);
+    }
+
+    @Override
     public Event save(Event event) {
-        // Placeholder implementation
         return eventRepository.save(event);
     }
 }
