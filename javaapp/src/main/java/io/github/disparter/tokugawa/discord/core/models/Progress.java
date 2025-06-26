@@ -38,7 +38,9 @@ public class Progress {
 
     private String currentArc;
 
-    private String currentChapter;
+    private String currentChapterId;
+
+    private Integer currentDialogueIndex = 0;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "completed_chapters", joinColumns = @JoinColumn(name = "progress_id"))

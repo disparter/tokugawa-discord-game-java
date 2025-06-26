@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 public class ChapterLoader {
 
     private static final Logger logger = LoggerFactory.getLogger(ChapterLoader.class);
-    
+
     private final ChapterRepository chapterRepository;
     private final ObjectMapper objectMapper;
     private final String dataDirectory;
@@ -90,16 +90,16 @@ public class ChapterLoader {
                      try {
                          String filename = path.getFileName().toString();
                          String chapterId = prefix + filename.replace(".json", "");
-                         
+
                          // Read the JSON file
                          Map<String, Object> chapterData = objectMapper.readValue(path.toFile(), Map.class);
-                         
+
                          // Add chapter ID to the data
                          chapterData.put("chapter_id", chapterId);
-                         
+
                          // Create chapter from data
                          Chapter chapter = createChapter(chapterData);
-                         
+
                          if (chapter != null) {
                              chapters.put(chapterId, chapter);
                              logger.info("Loaded chapter: {}", chapterId);
@@ -124,23 +124,23 @@ public class ChapterLoader {
     private Chapter createChapter(Map<String, Object> chapterData) {
         try {
             // Validate required fields
-            List<String> requiredFields = List.of("title", "description", "scenes");
+            List<String> requiredFields = List.of("title", "description");
             List<String> missingFields = requiredFields.stream()
                     .filter(field -> !chapterData.containsKey(field))
                     .collect(Collectors.toList());
-            
+
             if (!missingFields.isEmpty()) {
                 logger.error("Chapter {} is missing required fields: {}", 
                         chapterData.get("chapter_id"), String.join(", ", missingFields));
                 return null;
             }
-            
+
             // Create chapter entity
             Chapter chapter = new Chapter();
             chapter.setChapterId((String) chapterData.get("chapter_id"));
             chapter.setTitle((String) chapterData.get("title"));
             chapter.setDescription((String) chapterData.get("description"));
-            
+
             // Set chapter type
             String type = (String) chapterData.getOrDefault("type", "story");
             switch (type.toLowerCase()) {
@@ -157,24 +157,24 @@ public class ChapterLoader {
                     logger.warn("Unknown chapter type: {}, defaulting to STORY", type);
                     chapter.setType(Chapter.ChapterType.STORY);
             }
-            
+
             // Set other properties
             if (chapterData.containsKey("phase")) {
                 chapter.setPhase(((Number) chapterData.get("phase")).intValue());
             }
-            
+
             if (chapterData.containsKey("completion_exp")) {
                 chapter.setCompletionExp(((Number) chapterData.get("completion_exp")).intValue());
             }
-            
+
             if (chapterData.containsKey("completion_tusd")) {
                 chapter.setCompletionReward(((Number) chapterData.get("completion_tusd")).intValue());
             }
-            
+
             if (chapterData.containsKey("next_chapter")) {
                 chapter.setNextChapterId((String) chapterData.get("next_chapter"));
             }
-            
+
             // Store choices
             if (chapterData.containsKey("choices")) {
                 List<String> choices = new ArrayList<>();
@@ -191,7 +191,39 @@ public class ChapterLoader {
                 }
                 chapter.setChoices(choices);
             }
-            
+
+            // Store scenes
+            if (chapterData.containsKey("scenes")) {
+                List<String> scenes = new ArrayList<>();
+                Object scenesObj = chapterData.get("scenes");
+                if (scenesObj instanceof List) {
+                    for (Object scene : (List) scenesObj) {
+                        if (scene instanceof Map) {
+                            // Store scene as JSON string
+                            scenes.add(objectMapper.writeValueAsString(scene));
+                        }
+                    }
+                }
+                chapter.setScenes(scenes);
+            }
+
+            // Store dialogues
+            if (chapterData.containsKey("dialogues")) {
+                List<String> dialogues = new ArrayList<>();
+                Object dialoguesObj = chapterData.get("dialogues");
+                if (dialoguesObj instanceof List) {
+                    for (Object dialogue : (List) dialoguesObj) {
+                        if (dialogue instanceof String) {
+                            dialogues.add((String) dialogue);
+                        } else if (dialogue instanceof Map) {
+                            // For complex dialogue objects, store as JSON string
+                            dialogues.add(objectMapper.writeValueAsString(dialogue));
+                        }
+                    }
+                }
+                chapter.setDialogues(dialogues);
+            }
+
             return chapter;
         } catch (Exception e) {
             logger.error("Error creating chapter {}: {}", 
@@ -242,13 +274,13 @@ public class ChapterLoader {
      */
     public List<String> getAvailableChapters(Map<String, Object> playerData) {
         List<String> availableChapters = new ArrayList<>();
-        
+
         for (Map.Entry<String, Chapter> entry : chapters.entrySet()) {
             if (isChapterAvailable(entry.getValue(), playerData)) {
                 availableChapters.add(entry.getKey());
             }
         }
-        
+
         return availableChapters;
     }
 
@@ -263,29 +295,70 @@ public class ChapterLoader {
         // Get completed chapters
         Map<String, Object> storyProgress = (Map<String, Object>) playerData.getOrDefault("story_progress", new HashMap<>());
         List<String> completedChapters = (List<String>) storyProgress.getOrDefault("completed_chapters", new ArrayList<>());
-        
+
         // Check if the chapter is already completed
         if (completedChapters.contains(chapter.getChapterId())) {
             return false;
         }
-        
+
         // Check chapter requirements
-        List<String> requirements = chapter.getRequirements();
-        if (requirements == null || requirements.isEmpty()) {
+        List<String> requirementsList = chapter.getRequirements();
+        if (requirementsList == null || requirementsList.isEmpty()) {
             return true;
         }
-        
-        // TODO: Implement more complex requirement checking
-        // For now, just check if the player has completed all required chapters
-        for (String requirement : requirements) {
-            if (requirement.startsWith("chapter:")) {
-                String requiredChapter = requirement.substring("chapter:".length());
-                if (!completedChapters.contains(requiredChapter)) {
-                    return false;
+
+        try {
+            // Parse requirements - they could be in different formats
+            for (String requirementStr : requirementsList) {
+                // If it's a JSON string, parse it
+                if (requirementStr.startsWith("{")) {
+                    Map<String, Object> requirementMap = objectMapper.readValue(requirementStr, Map.class);
+
+                    // Check if this is a new player requirement
+                    if (Boolean.TRUE.equals(requirementMap.get("is_new_player"))) {
+                        if (!completedChapters.isEmpty()) {
+                            return false;
+                        }
+                    }
+
+                    // Check player stats requirements
+                    if (requirementMap.containsKey("stats")) {
+                        Map<String, Object> statsRequirements = (Map<String, Object>) requirementMap.get("stats");
+                        Map<String, Object> playerStats = (Map<String, Object>) playerData.getOrDefault("attributes", new HashMap<>());
+
+                        for (Map.Entry<String, Object> entry : statsRequirements.entrySet()) {
+                            String stat = entry.getKey();
+                            int requiredValue = ((Number) entry.getValue()).intValue();
+                            int playerValue = playerStats.containsKey(stat) ? ((Number) playerStats.get(stat)).intValue() : 0;
+
+                            if (playerValue < requiredValue) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    // Check completed chapters requirements
+                    if (requirementMap.containsKey("chapters")) {
+                        List<String> requiredChapters = (List<String>) requirementMap.get("chapters");
+                        for (String requiredChapter : requiredChapters) {
+                            if (!completedChapters.contains(requiredChapter)) {
+                                return false;
+                            }
+                        }
+                    }
+                } else if (requirementStr.startsWith("chapter:")) {
+                    // Legacy format: "chapter:chapter_id"
+                    String requiredChapter = requirementStr.substring("chapter:".length());
+                    if (!completedChapters.contains(requiredChapter)) {
+                        return false;
+                    }
                 }
             }
+
+            return true;
+        } catch (Exception e) {
+            logger.error("Error checking chapter requirements: {}", e.getMessage(), e);
+            return false;
         }
-        
-        return true;
     }
 }

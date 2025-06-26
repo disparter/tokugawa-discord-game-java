@@ -219,10 +219,42 @@ public class NarrativeServiceImpl implements NarrativeService {
         Chapter chapter = chapterOpt.get();
         int currentDialogueIndex = progress.getCurrentDialogueIndex();
 
-        // Get choices for the current dialogue
-        List<String> choices = chapter.getChoices();
+        // Get choices based on the current dialogue index
+        List<String> choices;
+
+        // Check if we should use dialogues or choices
+        List<String> dialogues = chapter.getDialogues();
+        if (dialogues != null && !dialogues.isEmpty() && currentDialogueIndex < dialogues.size()) {
+            // We're in a dialogue, get choices from the current dialogue
+            try {
+                String dialogueJson = dialogues.get(currentDialogueIndex);
+                Map<String, Object> dialogueData = objectMapper.readValue(dialogueJson, Map.class);
+                Object dialogueChoices = dialogueData.get("choices");
+
+                if (dialogueChoices instanceof List) {
+                    choices = new ArrayList<>();
+                    for (Object choice : (List) dialogueChoices) {
+                        if (choice instanceof String) {
+                            choices.add((String) choice);
+                        } else if (choice instanceof Map) {
+                            choices.add(objectMapper.writeValueAsString(choice));
+                        }
+                    }
+                } else {
+                    // No choices in this dialogue, use chapter choices
+                    choices = chapter.getChoices();
+                }
+            } catch (Exception e) {
+                logger.error("Error parsing dialogue JSON: {}", e.getMessage(), e);
+                choices = chapter.getChoices();
+            }
+        } else {
+            // No dialogues or past all dialogues, use chapter choices
+            choices = chapter.getChoices();
+        }
+
         if (choices == null || choices.isEmpty()) {
-            logger.warn("No choices available for chapter {}", currentChapterId);
+            logger.warn("No choices available for chapter {} at dialogue index {}", currentChapterId, currentDialogueIndex);
             return createErrorResponse("No choices available");
         }
 
@@ -250,6 +282,15 @@ public class NarrativeServiceImpl implements NarrativeService {
             return createErrorResponse("Error parsing choice data");
         }
 
+        // Record the choice in player progress
+        Map<String, String> storyChoices = progress.getChoices();
+        if (storyChoices == null) {
+            storyChoices = new HashMap<>();
+            progress.setChoices(storyChoices);
+        }
+        String choiceKey = currentChapterId + "_dialogue_" + currentDialogueIndex;
+        storyChoices.put(choiceKey, String.valueOf(choiceIndex));
+
         // Apply choice effects
         if (choiceData.containsKey("effects")) {
             applyChoiceEffects(player, progress, (Map<String, Object>) choiceData.get("effects"));
@@ -268,6 +309,30 @@ public class NarrativeServiceImpl implements NarrativeService {
             completeChapter(chapter.getId(), playerId);
         }
 
+        // Check if this choice moves to a scene
+        if (choiceData.containsKey("next_scene")) {
+            String nextSceneId = (String) choiceData.get("next_scene");
+
+            // Find the scene in the chapter's scenes
+            List<String> scenes = chapter.getScenes();
+            if (scenes != null && !scenes.isEmpty()) {
+                for (int i = 0; i < scenes.size(); i++) {
+                    try {
+                        Map<String, Object> sceneData = objectMapper.readValue(scenes.get(i), Map.class);
+                        String sceneId = (String) sceneData.get("scene_id");
+
+                        if (nextSceneId.equals(sceneId)) {
+                            // Found the scene, update progress
+                            progress.setCurrentDialogueIndex(i);
+                            break;
+                        }
+                    } catch (Exception e) {
+                        logger.error("Error parsing scene JSON: {}", e.getMessage(), e);
+                    }
+                }
+            }
+        }
+
         // Save changes
         playerRepository.save(player);
         progressRepository.save(progress);
@@ -279,11 +344,31 @@ public class NarrativeServiceImpl implements NarrativeService {
         response.put("progress", progress);
         response.put("next_dialogue_index", progress.getCurrentDialogueIndex());
 
+        // Check if we need to move to the next chapter
         if (choiceData.containsKey("next_chapter")) {
             String nextChapterId = (String) choiceData.get("next_chapter");
             Optional<Chapter> nextChapterOpt = chapterRepository.findByChapterId(nextChapterId);
             if (nextChapterOpt.isPresent()) {
                 response.put("next_chapter", nextChapterOpt.get());
+
+                // Update progress to point to the next chapter
+                progress.setCurrentChapterId(nextChapterId);
+                progress.setCurrentDialogueIndex(0);
+                progressRepository.save(progress);
+            }
+        } else if (progress.getCurrentDialogueIndex() >= dialogues.size()) {
+            // We've reached the end of dialogues, check if there's a next chapter
+            String nextChapterId = chapter.getNextChapterId();
+            if (nextChapterId != null && !nextChapterId.isEmpty()) {
+                Optional<Chapter> nextChapterOpt = chapterRepository.findByChapterId(nextChapterId);
+                if (nextChapterOpt.isPresent()) {
+                    response.put("next_chapter", nextChapterOpt.get());
+
+                    // Update progress to point to the next chapter
+                    progress.setCurrentChapterId(nextChapterId);
+                    progress.setCurrentDialogueIndex(0);
+                    progressRepository.save(progress);
+                }
             }
         }
 
