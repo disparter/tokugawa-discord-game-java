@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,34 @@ public class RelationshipServiceImpl implements RelationshipService {
     private static final int COMMITTED_THRESHOLD = 100;
     private static final int RIVAL_THRESHOLD = -30;
     private static final int ENEMY_THRESHOLD = -60;
+
+    // Affinity changes for different interaction types
+    private static final Map<String, Integer> INTERACTION_AFFINITY_CHANGES = new HashMap<>();
+
+    // Romance event triggers based on relationship status
+    private static final Map<RelationshipStatus, List<String>> ROMANCE_EVENTS = new HashMap<>();
+
+    static {
+        // Initialize interaction affinity changes
+        INTERACTION_AFFINITY_CHANGES.put("GREET", 1);
+        INTERACTION_AFFINITY_CHANGES.put("CHAT", 2);
+        INTERACTION_AFFINITY_CHANGES.put("COMPLIMENT", 3);
+        INTERACTION_AFFINITY_CHANGES.put("GIFT", 5);
+        INTERACTION_AFFINITY_CHANGES.put("HELP", 7);
+        INTERACTION_AFFINITY_CHANGES.put("SPECIAL_FAVOR", 10);
+        INTERACTION_AFFINITY_CHANGES.put("INSULT", -3);
+        INTERACTION_AFFINITY_CHANGES.put("ARGUE", -5);
+        INTERACTION_AFFINITY_CHANGES.put("BETRAY", -10);
+
+        // Initialize romance events
+        ROMANCE_EVENTS.put(RelationshipStatus.ACQUAINTANCE, List.of("first_impression", "casual_meeting"));
+        ROMANCE_EVENTS.put(RelationshipStatus.FRIEND, List.of("growing_friendship", "shared_interest"));
+        ROMANCE_EVENTS.put(RelationshipStatus.CLOSE_FRIEND, List.of("deep_conversation", "personal_secret"));
+        ROMANCE_EVENTS.put(RelationshipStatus.BEST_FRIEND, List.of("emotional_support", "life_crisis"));
+        ROMANCE_EVENTS.put(RelationshipStatus.CRUSH, List.of("romantic_tension", "jealousy_moment"));
+        ROMANCE_EVENTS.put(RelationshipStatus.DATING, List.of("first_date", "relationship_challenge"));
+        ROMANCE_EVENTS.put(RelationshipStatus.COMMITTED, List.of("commitment_ceremony", "future_plans"));
+    }
 
     @Autowired
     public RelationshipServiceImpl(RelationshipRepository relationshipRepository,
@@ -125,6 +155,7 @@ public class RelationshipServiceImpl implements RelationshipService {
      */
     private void updateRelationshipStatus(Relationship relationship) {
         int affinity = relationship.getAffinity();
+        RelationshipStatus oldStatus = relationship.getStatus();
 
         if (affinity >= COMMITTED_THRESHOLD) {
             relationship.setStatus(RelationshipStatus.COMMITTED);
@@ -170,5 +201,101 @@ public class RelationshipServiceImpl implements RelationshipService {
     @Override
     public Relationship save(Relationship relationship) {
         return relationshipRepository.save(relationship);
+    }
+
+    @Override
+    @Transactional
+    public Relationship updateAffinityByInteraction(Long playerId, Long npcId, String interactionType) {
+        if (!INTERACTION_AFFINITY_CHANGES.containsKey(interactionType)) {
+            throw new IllegalArgumentException("Unknown interaction type: " + interactionType);
+        }
+
+        int affinityChange = INTERACTION_AFFINITY_CHANGES.get(interactionType);
+
+        if (affinityChange > 0) {
+            return improveRelationship(playerId, npcId, affinityChange);
+        } else if (affinityChange < 0) {
+            return worsenRelationship(playerId, npcId, Math.abs(affinityChange));
+        } else {
+            return getRelationship(playerId, npcId);
+        }
+    }
+
+    @Override
+    public boolean hasReachedStatus(Long playerId, Long npcId, RelationshipStatus status) {
+        Relationship relationship = getRelationship(playerId, npcId);
+
+        // Check if the current status is equal to or higher than the target status
+        // For positive statuses (ACQUAINTANCE to COMMITTED)
+        if (status.ordinal() >= RelationshipStatus.ACQUAINTANCE.ordinal() && 
+            status.ordinal() <= RelationshipStatus.COMMITTED.ordinal()) {
+            return relationship.getStatus().ordinal() >= status.ordinal();
+        }
+
+        // For negative statuses (RIVAL, ENEMY)
+        if (status == RelationshipStatus.RIVAL || status == RelationshipStatus.ENEMY) {
+            return relationship.getStatus() == status || 
+                  (status == RelationshipStatus.RIVAL && relationship.getStatus() == RelationshipStatus.ENEMY);
+        }
+
+        return relationship.getStatus() == status;
+    }
+
+    @Override
+    public List<NPC> getNPCsByStatus(Long playerId, RelationshipStatus status) {
+        List<Relationship> relationships = getRelationshipsForPlayer(playerId);
+        return relationships.stream()
+                .filter(r -> r.getStatus() == status)
+                .map(Relationship::getNpc)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public String triggerRomanceEvent(Long playerId, Long npcId) {
+        Relationship relationship = getRelationship(playerId, npcId);
+        RelationshipStatus status = relationship.getStatus();
+
+        // Check if there are events for this status
+        if (!ROMANCE_EVENTS.containsKey(status)) {
+            return null;
+        }
+
+        // Get potential events for this status
+        List<String> potentialEvents = ROMANCE_EVENTS.get(status);
+
+        // Filter out events that have already been triggered
+        List<String> availableEvents = potentialEvents.stream()
+                .filter(eventId -> !hasTriggeredEvent(playerId, npcId, eventId))
+                .collect(Collectors.toList());
+
+        if (availableEvents.isEmpty()) {
+            return null;
+        }
+
+        // Trigger the first available event
+        String eventId = availableEvents.get(0);
+        recordTriggeredEvent(playerId, npcId, eventId);
+
+        return eventId;
+    }
+
+    @Override
+    @Transactional
+    public Relationship recordTriggeredEvent(Long playerId, Long npcId, String eventId) {
+        Relationship relationship = getRelationship(playerId, npcId);
+
+        if (!relationship.getTriggeredEvents().contains(eventId)) {
+            relationship.getTriggeredEvents().add(eventId);
+            return relationshipRepository.save(relationship);
+        }
+
+        return relationship;
+    }
+
+    @Override
+    public boolean hasTriggeredEvent(Long playerId, Long npcId, String eventId) {
+        Relationship relationship = getRelationship(playerId, npcId);
+        return relationship.getTriggeredEvents().contains(eventId);
     }
 }
