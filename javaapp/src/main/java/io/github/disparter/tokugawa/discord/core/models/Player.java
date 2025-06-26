@@ -11,6 +11,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinTable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -19,6 +21,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Entity representing a player in the game.
@@ -73,4 +77,12 @@ public class Player {
     private List<String> discoveredAreas = new ArrayList<>();
 
     private String clubId;
+
+    @ManyToMany
+    @JoinTable(
+        name = "player_techniques",
+        joinColumns = @JoinColumn(name = "player_id"),
+        inverseJoinColumns = @JoinColumn(name = "technique_id")
+    )
+    private Set<Technique> knownTechniques = new HashSet<>();
 }

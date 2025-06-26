@@ -12,68 +12,71 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.JoinTable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 
 /**
- * Entity representing a non-player character in the game.
+ * Entity representing a technique that can be used in duels.
  */
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class NPC {
+public class Technique {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String npcId;
+    private String techniqueId;
 
     @Column(nullable = false)
     private String name;
 
     @Lob
     @Column(nullable = false)
-    private String background;
+    private String description;
 
     @Enumerated(EnumType.STRING)
-    private NPCType type;
+    private TechniqueType type;
+
+    private Integer powerPoints;
+
+    private Integer cooldown = 0;
+
+    private Integer manaCost = 0;
+
+    private Integer baseDamage = 0;
+
+    private Boolean learnable = true;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "npc_dialogues", joinColumns = @JoinColumn(name = "npc_id"))
-    @Column(name = "dialogue", columnDefinition = "TEXT")
-    private Map<String, String> dialogues = new HashMap<>();
+    @CollectionTable(name = "technique_effects", joinColumns = @JoinColumn(name = "technique_id"))
+    @Column(name = "effect_value")
+    private Map<String, Integer> effects = new HashMap<>();
 
-    @OneToMany(mappedBy = "npc")
-    private List<Relationship> relationships = new ArrayList<>();
+    @ManyToMany(mappedBy = "knownTechniques")
+    private Set<Player> players = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(
-        name = "npc_techniques",
-        joinColumns = @JoinColumn(name = "npc_id"),
-        inverseJoinColumns = @JoinColumn(name = "technique_id")
-    )
-    private Set<Technique> knownTechniques = new HashSet<>();
+    @ManyToMany(mappedBy = "knownTechniques")
+    private Set<NPC> npcs = new HashSet<>();
 
     /**
-     * Enum representing the type of NPC.
+     * Enum representing the type of technique.
      */
-    public enum NPCType {
-        BASE,
-        STUDENT,
-        FACULTY
+    public enum TechniqueType {
+        ATTACK,
+        DEFENSE,
+        SUPPORT,
+        SPECIAL,
+        ULTIMATE
     }
 }
