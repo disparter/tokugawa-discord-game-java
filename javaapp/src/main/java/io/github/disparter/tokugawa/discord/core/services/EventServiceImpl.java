@@ -2,6 +2,7 @@ package io.github.disparter.tokugawa.discord.core.services;
 
 import io.github.disparter.tokugawa.discord.core.models.Event;
 import io.github.disparter.tokugawa.discord.core.models.Event.EventType;
+import io.github.disparter.tokugawa.discord.core.models.GameCalendar.Season;
 import io.github.disparter.tokugawa.discord.core.models.NPC;
 import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.models.Relationship;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +33,8 @@ public class EventServiceImpl implements EventService {
     private final ProgressRepository progressRepository;
     private final NPCRepository npcRepository;
     private final RelationshipService relationshipService;
+    private final GameCalendarService gameCalendarService;
+    private final Random random = new Random();
 
     // Romance route requirements - NPC ID to minimum affinity level
     private final Map<Long, Integer> romanceRequirements = new HashMap<>();
@@ -43,12 +47,14 @@ public class EventServiceImpl implements EventService {
                            PlayerRepository playerRepository,
                            ProgressRepository progressRepository,
                            NPCRepository npcRepository,
-                           RelationshipService relationshipService) {
+                           RelationshipService relationshipService,
+                           GameCalendarService gameCalendarService) {
         this.eventRepository = eventRepository;
         this.playerRepository = playerRepository;
         this.progressRepository = progressRepository;
         this.npcRepository = npcRepository;
         this.relationshipService = relationshipService;
+        this.gameCalendarService = gameCalendarService;
 
         // Initialize romance routes
         initializeRomanceRoutes();
@@ -131,13 +137,80 @@ public class EventServiceImpl implements EventService {
      */
     private boolean isEventAvailableForPlayer(Event event, Player player) {
         // Check event type
-        if (event.getType() == EventType.ROMANCE) {
-            return isRomanceEventAvailableForPlayer(event, player);
+        switch (event.getType()) {
+            case ROMANCE:
+                return isRomanceEventAvailableForPlayer(event, player);
+            case SEASONAL:
+                return isSeasonalEventAvailableForPlayer(event, player);
+            case RANDOM:
+                return isRandomEventAvailableForPlayer(event, player);
+            case CHOICE_TRIGGERED:
+                return isChoiceTriggeredEventAvailableForPlayer(event, player);
+            default:
+                // For other event types, check general conditions
+                return true;
+        }
+    }
+
+    /**
+     * Checks if a seasonal event is available for a player based on the current date.
+     *
+     * @param event the seasonal event to check
+     * @param player the player
+     * @return true if the seasonal event is available, false otherwise
+     */
+    private boolean isSeasonalEventAvailableForPlayer(Event event, Player player) {
+        // Check if the event has seasonal data
+        if (event.getStartMonth() == null || event.getStartDay() == null || 
+            event.getEndMonth() == null || event.getEndDay() == null) {
+            return false;
         }
 
-        // For other event types, check general conditions
-        // This is a simplified implementation
-        return true;
+        // Check if the current date is within the event period
+        return gameCalendarService.isDateInRange(
+            event.getStartMonth(), event.getStartDay(),
+            event.getEndMonth(), event.getEndDay()
+        );
+    }
+
+    /**
+     * Checks if a random event is available for a player based on chance.
+     *
+     * @param event the random event to check
+     * @param player the player
+     * @return true if the random event is available, false otherwise
+     */
+    private boolean isRandomEventAvailableForPlayer(Event event, Player player) {
+        // Check if the event has a trigger chance
+        if (event.getTriggerChance() == null) {
+            return false;
+        }
+
+        // Check random chance
+        return random.nextDouble() < event.getTriggerChance();
+    }
+
+    /**
+     * Checks if a choice-triggered event is available for a player based on their previous choices.
+     *
+     * @param event the choice-triggered event to check
+     * @param player the player
+     * @return true if the choice-triggered event is available, false otherwise
+     */
+    private boolean isChoiceTriggeredEventAvailableForPlayer(Event event, Player player) {
+        // Check if the event has required choices
+        if (event.getRequiredChoices() == null || event.getRequiredChoices().isEmpty()) {
+            return false;
+        }
+
+        // Get player's choices from progress repository
+        List<String> playerChoices = progressRepository.findByPlayerId(player.getId())
+            .stream()
+            .map(progress -> progress.getChoiceId())
+            .collect(Collectors.toList());
+
+        // Check if player has made all required choices
+        return playerChoices.containsAll(event.getRequiredChoices());
     }
 
     /**
@@ -221,9 +294,23 @@ public class EventServiceImpl implements EventService {
             event.getParticipants().add(player);
         }
 
-        // For romance events, record in relationship
-        if (event.getType() == EventType.ROMANCE) {
-            recordRomanceEvent(event, player);
+        // Handle specific event types
+        switch (event.getType()) {
+            case ROMANCE:
+                recordRomanceEvent(event, player);
+                break;
+            case SEASONAL:
+                // No special handling needed beyond participation
+                break;
+            case RANDOM:
+                // No special handling needed beyond participation
+                break;
+            case CHOICE_TRIGGERED:
+                // No special handling needed beyond participation
+                break;
+            default:
+                // No special handling needed for other event types
+                break;
         }
 
         // Save the event

@@ -10,6 +10,7 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -43,6 +44,10 @@ public class Player {
     private Integer points = 0;
     private Integer reputation = 0;
 
+    @ManyToOne
+    @JoinColumn(name = "current_location_id")
+    private Location currentLocation;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "player_stats", joinColumns = @JoinColumn(name = "player_id"))
     @MapKeyColumn(name = "stat_name")
@@ -62,6 +67,10 @@ public class Player {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "player_achievements", joinColumns = @JoinColumn(name = "player_id"))
     private List<String> achievements = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "player_discovered_areas", joinColumns = @JoinColumn(name = "player_id"))
+    private List<String> discoveredAreas = new ArrayList<>();
 
     private String clubId;
 }

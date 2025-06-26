@@ -56,6 +56,20 @@ public class Event {
 
     private LocalDateTime endTime;
 
+    // Seasonal event fields
+    private Integer startMonth;
+    private Integer startDay;
+    private Integer endMonth;
+    private Integer endDay;
+
+    // Choice-triggered event fields
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "event_required_choices", joinColumns = @JoinColumn(name = "event_id"))
+    private List<String> requiredChoices = new ArrayList<>();
+
+    // Random event fields
+    private Double triggerChance;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "event_rewards", joinColumns = @JoinColumn(name = "event_id"))
     private List<String> rewards = new ArrayList<>();
@@ -75,6 +89,7 @@ public class Event {
         CLIMACTIC,
         RANDOM,
         SEASONAL,
-        ROMANCE
+        ROMANCE,
+        CHOICE_TRIGGERED
     }
 }
