@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Semantic Versioning Post-Commit Hook
+# This hook automatically creates version tags based on commit messages.
+# It follows semantic versioning (MAJOR.MINOR.PATCH):
+# - feat: increments MINOR version
+# - fix: increments PATCH version
+# - feat with "BREAKING CHANGE" in body: increments MAJOR version
+
+# Get the latest commit message
+commit_msg=$(git log -1 --pretty=%B)
+
+# Extract the commit type
+if [[ "$commit_msg" =~ ^(feat|fix|docs|style|refactor|test|chore)(\([a-z0-9-]+\))?: ]]; then
+  commit_type=${BASH_REMATCH[1]}
+else
+  echo "Not a semantic commit message, skipping version tag"
+  exit 0
+fi
+
+# Check for breaking changes
+breaking_change=false
+if [[ "$commit_msg" == *"BREAKING CHANGE"* ]]; then
+  breaking_change=true
+fi
+
+# Get the latest tag
+latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+# Extract version numbers
+if [[ "$latest_tag" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+  major=${BASH_REMATCH[1]}
+  minor=${BASH_REMATCH[2]}
+  patch=${BASH_REMATCH[3]}
+else
+  # Default to 0.0.0 if no valid tag exists
+  major=0
+  minor=0
+  patch=0
+fi
+
+# Increment version based on commit type
+if [[ "$breaking_change" == true ]]; then
+  # Breaking change increments major version
+  major=$((major + 1))
+  minor=0
+  patch=0
+elif [[ "$commit_type" == "feat" ]]; then
+  # Feature increments minor version
+  minor=$((minor + 1))
+  patch=0
+elif [[ "$commit_type" == "fix" ]]; then
+  # Fix increments patch version
+  patch=$((patch + 1))
+else
+  # Other commit types don't increment version
+  echo "Commit type '$commit_type' doesn't trigger version increment"
+  exit 0
+fi
+
+# Create new tag
+new_tag="v$major.$minor.$patch"
+echo "Creating new tag: $new_tag"
+git tag -a "$new_tag" -m "Version $major.$minor.$patch"
+
+echo "To push the new tag, run: git push origin $new_tag"

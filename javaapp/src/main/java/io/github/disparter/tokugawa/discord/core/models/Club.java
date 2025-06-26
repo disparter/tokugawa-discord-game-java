@@ -12,12 +12,16 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Lob;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Entity representing a club in the game.
@@ -45,6 +49,15 @@ public class Club {
     @Column(nullable = false)
     private String leaderId;
 
+    @Column(nullable = false)
+    private Integer reputation = 0;
+
+    @Column(nullable = false)
+    private Integer ranking = 0;
+
+    @Enumerated(EnumType.STRING)
+    private ClubType type = ClubType.GENERAL;
+
     @OneToMany(mappedBy = "club")
     private List<Player> members = new ArrayList<>();
 
@@ -57,4 +70,20 @@ public class Club {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "club_activities", joinColumns = @JoinColumn(name = "club_id"))
     private List<String> activities = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "club_competition_results", joinColumns = @JoinColumn(name = "club_id"))
+    private Map<String, Integer> competitionResults = new HashMap<>();
+
+    /**
+     * Enum representing the type of club.
+     */
+    public enum ClubType {
+        GENERAL,
+        SPORTS,
+        ACADEMIC,
+        ARTS,
+        SOCIAL,
+        SPECIAL
+    }
 }

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Semantic Versioning Pre-Push Hook
+# This hook reminds users to push tags along with their commits
+
+# Get the remote and branch being pushed to
+remote="$1"
+url="$2"
+
+# Check if there are any local tags that haven't been pushed
+local_tags=$(git tag --points-at HEAD)
+
+if [ -n "$local_tags" ]; then
+  echo "REMINDER: You have local tags that should be pushed:"
+  echo "$local_tags"
+  echo "To push tags, use: git push $remote --tags"
+  
+  # Ask user if they want to push tags now
+  read -p "Do you want to push tags now? (y/n) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    git push "$remote" --tags
+    echo "Tags pushed successfully!"
+  else
+    echo "Remember to push your tags later!"
+  fi
+fi
+
+# Allow the push to proceed
+exit 0

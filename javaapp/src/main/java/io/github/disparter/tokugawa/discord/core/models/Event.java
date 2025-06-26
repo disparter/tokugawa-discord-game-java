@@ -53,7 +53,7 @@ public class Event {
     private EventType type;
 
     private LocalDateTime startTime;
-    
+
     private LocalDateTime endTime;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -74,6 +74,7 @@ public class Event {
         BASE,
         CLIMACTIC,
         RANDOM,
-        SEASONAL
+        SEASONAL,
+        ROMANCE
     }
 }

@@ -41,6 +41,7 @@ public class Player {
     private Integer level = 1;
     private Integer exp = 0;
     private Integer points = 0;
+    private Integer reputation = 0;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "player_stats", joinColumns = @JoinColumn(name = "player_id"))

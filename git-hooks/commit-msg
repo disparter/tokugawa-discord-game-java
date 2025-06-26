@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Semantic Commit Messages Hook
+# This hook validates that commit messages follow the semantic format:
+# <type>(<scope>): <subject>
+#
+# Types: feat, fix, docs, style, refactor, test, chore
+# Example: feat(auth): add login functionality
+
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Regex pattern for semantic commit messages
+pattern="^(feat|fix|docs|style|refactor|test|chore)(\([a-z0-9-]+\))?: .+"
+
+if ! [[ "$commit_msg" =~ $pattern ]]; then
+  echo "ERROR: Commit message does not follow semantic format."
+  echo "Required format: <type>(<scope>): <subject>"
+  echo "Types: feat, fix, docs, style, refactor, test, chore"
+  echo "Example: feat(auth): add login functionality"
+  exit 1
+fi
+
+exit 0
