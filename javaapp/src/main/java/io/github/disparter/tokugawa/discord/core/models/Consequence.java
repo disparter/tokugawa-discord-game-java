@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Entity representing a consequence of a player's decision.
@@ -67,6 +68,31 @@ public class Consequence {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "consequence_affected_npcs", joinColumns = @JoinColumn(name = "consequence_id"))
     private List<Long> affectedNpcs = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "consequence_ethical_reflections", joinColumns = @JoinColumn(name = "consequence_id"))
+    @Column(name = "reflection", length = 1000)
+    private List<String> ethicalReflections = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "consequence_alternative_paths", joinColumns = @JoinColumn(name = "consequence_id"))
+    @Column(name = "path", length = 1000)
+    private List<String> alternativePaths = new ArrayList<>();
+
+    @Column(name = "community_choice_percentage")
+    private Double communityChoicePercentage;
+
+    @Column(name = "decision_context", length = 1000)
+    private String decisionContext;
+
+    @Column(name = "choice_made", length = 500)
+    private String choiceMade;
+
+    @Column(name = "chapter_id")
+    private String chapterId;
+
+    @Column(name = "scene_id")
+    private String sceneId;
 
     /**
      * Enum representing the type of consequence.

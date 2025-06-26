@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ public class ConsequenceServiceImpl implements ConsequenceService {
                                         List<String> relatedChoices, List<Long> affectedNpcs) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
-        
+
         Consequence consequence = new Consequence();
         consequence.setConsequenceId("consequence_" + UUID.randomUUID().toString().substring(0, 8));
         consequence.setName(name);
@@ -48,19 +49,19 @@ public class ConsequenceServiceImpl implements ConsequenceService {
         consequence.setPlayer(player);
         consequence.setCreatedAt(LocalDateTime.now());
         consequence.setActive(true);
-        
+
         if (effects != null) {
             consequence.setEffects(new ArrayList<>(effects));
         }
-        
+
         if (relatedChoices != null) {
             consequence.setRelatedChoices(new ArrayList<>(relatedChoices));
         }
-        
+
         if (affectedNpcs != null) {
             consequence.setAffectedNpcs(new ArrayList<>(affectedNpcs));
         }
-        
+
         return consequenceRepository.save(consequence);
     }
 
@@ -94,7 +95,7 @@ public class ConsequenceServiceImpl implements ConsequenceService {
     public Consequence deactivateConsequence(Long consequenceId) {
         Consequence consequence = consequenceRepository.findById(consequenceId)
                 .orElseThrow(() -> new IllegalArgumentException("Consequence not found with ID: " + consequenceId));
-        
+
         consequence.setActive(false);
         return consequenceRepository.save(consequence);
     }
@@ -103,33 +104,33 @@ public class ConsequenceServiceImpl implements ConsequenceService {
     public Map<String, List<Consequence>> getDecisionDashboard(Long playerId) {
         List<Consequence> allConsequences = getConsequencesForPlayer(playerId);
         Map<String, List<Consequence>> dashboard = new HashMap<>();
-        
+
         // Group by type
         dashboard.put("immediate", allConsequences.stream()
                 .filter(c -> c.getType() == ConsequenceType.IMMEDIATE)
                 .collect(Collectors.toList()));
-        
+
         dashboard.put("short_term", allConsequences.stream()
                 .filter(c -> c.getType() == ConsequenceType.SHORT_TERM)
                 .collect(Collectors.toList()));
-        
+
         dashboard.put("long_term", allConsequences.stream()
                 .filter(c -> c.getType() == ConsequenceType.LONG_TERM)
                 .collect(Collectors.toList()));
-        
+
         dashboard.put("permanent", allConsequences.stream()
                 .filter(c -> c.getType() == ConsequenceType.PERMANENT)
                 .collect(Collectors.toList()));
-        
+
         // Group by active status
         dashboard.put("active", allConsequences.stream()
                 .filter(Consequence::isActive)
                 .collect(Collectors.toList()));
-        
+
         dashboard.put("inactive", allConsequences.stream()
                 .filter(c -> !c.isActive())
                 .collect(Collectors.toList()));
-        
+
         return dashboard;
     }
 
@@ -137,20 +138,20 @@ public class ConsequenceServiceImpl implements ConsequenceService {
     @Transactional
     public Player applyConsequenceEffects(Player player) {
         List<Consequence> activeConsequences = getActiveConsequencesForPlayer(player.getId());
-        
+
         // This is a simplified implementation
         // In a real implementation, you would parse the effects and apply them to the player
         // For example, effects could be strings like "reputation:+10" or "currency:-5"
-        
+
         for (Consequence consequence : activeConsequences) {
             for (String effect : consequence.getEffects()) {
                 applyEffect(player, effect);
             }
         }
-        
+
         return playerRepository.save(player);
     }
-    
+
     /**
      * Applies an effect to a player.
      * 
@@ -164,10 +165,10 @@ public class ConsequenceServiceImpl implements ConsequenceService {
         if (parts.length != 2) {
             return;
         }
-        
+
         String attribute = parts[0];
         String valueStr = parts[1];
-        
+
         try {
             // Handle different attributes
             switch (attribute) {
@@ -188,5 +189,170 @@ public class ConsequenceServiceImpl implements ConsequenceService {
         } catch (NumberFormatException e) {
             // Ignore invalid values
         }
+    }
+
+    @Override
+    @Transactional
+    public Consequence trackPlayerDecision(Long playerId, String chapterId, String sceneId, 
+                                         String choiceMade, String decisionContext, String name, 
+                                         String description, ConsequenceType type, List<String> effects, 
+                                         List<String> relatedChoices, List<Long> affectedNpcs) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        Consequence consequence = new Consequence();
+        consequence.setConsequenceId("consequence_" + UUID.randomUUID().toString().substring(0, 8));
+        consequence.setName(name);
+        consequence.setDescription(description);
+        consequence.setType(type);
+        consequence.setPlayer(player);
+        consequence.setCreatedAt(LocalDateTime.now());
+        consequence.setActive(true);
+        consequence.setChapterId(chapterId);
+        consequence.setSceneId(sceneId);
+        consequence.setChoiceMade(choiceMade);
+        consequence.setDecisionContext(decisionContext);
+
+        if (effects != null) {
+            consequence.setEffects(new ArrayList<>(effects));
+        }
+
+        if (relatedChoices != null) {
+            consequence.setRelatedChoices(new ArrayList<>(relatedChoices));
+        }
+
+        if (affectedNpcs != null) {
+            consequence.setAffectedNpcs(new ArrayList<>(affectedNpcs));
+        }
+
+        // Calculate and set the community choice percentage
+        double percentage = getCommunityChoicePercentage(chapterId, sceneId, choiceMade);
+        consequence.setCommunityChoicePercentage(percentage);
+
+        return consequenceRepository.save(consequence);
+    }
+
+    @Override
+    public double getCommunityChoicePercentage(String chapterId, String sceneId, String choiceMade) {
+        long choiceCount = consequenceRepository.countByChapterIdAndSceneIdAndChoiceMade(chapterId, sceneId, choiceMade);
+        long totalCount = consequenceRepository.countByChapterIdAndSceneId(chapterId, sceneId);
+
+        if (totalCount == 0) {
+            return 0.0;
+        }
+
+        return (double) choiceCount / totalCount * 100.0;
+    }
+
+    @Override
+    @Transactional
+    public Consequence updateCommunityChoicePercentage(Long consequenceId) {
+        Consequence consequence = consequenceRepository.findById(consequenceId)
+                .orElseThrow(() -> new IllegalArgumentException("Consequence not found with ID: " + consequenceId));
+
+        double percentage = getCommunityChoicePercentage(
+                consequence.getChapterId(), 
+                consequence.getSceneId(), 
+                consequence.getChoiceMade());
+
+        consequence.setCommunityChoicePercentage(percentage);
+        return consequenceRepository.save(consequence);
+    }
+
+    @Override
+    @Transactional
+    public Consequence addEthicalReflections(Long consequenceId, List<String> reflections) {
+        Consequence consequence = consequenceRepository.findById(consequenceId)
+                .orElseThrow(() -> new IllegalArgumentException("Consequence not found with ID: " + consequenceId));
+
+        List<String> currentReflections = consequence.getEthicalReflections();
+        if (currentReflections == null) {
+            currentReflections = new ArrayList<>();
+        }
+
+        currentReflections.addAll(reflections);
+        consequence.setEthicalReflections(currentReflections);
+
+        return consequenceRepository.save(consequence);
+    }
+
+    @Override
+    public Map<Long, List<String>> getEthicalReflectionsForPlayer(Long playerId) {
+        List<Consequence> consequences = getConsequencesForPlayer(playerId);
+        Map<Long, List<String>> reflectionsMap = new HashMap<>();
+
+        for (Consequence consequence : consequences) {
+            if (consequence.getEthicalReflections() != null && !consequence.getEthicalReflections().isEmpty()) {
+                reflectionsMap.put(consequence.getId(), consequence.getEthicalReflections());
+            }
+        }
+
+        return reflectionsMap;
+    }
+
+    @Override
+    @Transactional
+    public Consequence addAlternativePaths(Long consequenceId, List<String> alternativePaths) {
+        Consequence consequence = consequenceRepository.findById(consequenceId)
+                .orElseThrow(() -> new IllegalArgumentException("Consequence not found with ID: " + consequenceId));
+
+        List<String> currentPaths = consequence.getAlternativePaths();
+        if (currentPaths == null) {
+            currentPaths = new ArrayList<>();
+        }
+
+        currentPaths.addAll(alternativePaths);
+        consequence.setAlternativePaths(currentPaths);
+
+        return consequenceRepository.save(consequence);
+    }
+
+    @Override
+    public Map<Long, List<String>> getAlternativePathsForPlayer(Long playerId) {
+        List<Consequence> consequences = getConsequencesForPlayer(playerId);
+        Map<Long, List<String>> pathsMap = new HashMap<>();
+
+        for (Consequence consequence : consequences) {
+            if (consequence.getAlternativePaths() != null && !consequence.getAlternativePaths().isEmpty()) {
+                pathsMap.put(consequence.getId(), consequence.getAlternativePaths());
+            }
+        }
+
+        return pathsMap;
+    }
+
+    @Override
+    public List<Consequence> getConsequencesByChapterAndScene(Long playerId, String chapterId, String sceneId) {
+        return consequenceRepository.findByPlayerIdAndChapterIdAndSceneId(playerId, chapterId, sceneId);
+    }
+
+    @Override
+    public Map<String, List<Consequence>> getEnhancedDecisionDashboard(Long playerId) {
+        Map<String, List<Consequence>> dashboard = getDecisionDashboard(playerId);
+        List<Consequence> allConsequences = getConsequencesForPlayer(playerId);
+
+        // Add sections for consequences with ethical reflections and alternative paths
+        dashboard.put("with_reflections", allConsequences.stream()
+                .filter(c -> c.getEthicalReflections() != null && !c.getEthicalReflections().isEmpty())
+                .collect(Collectors.toList()));
+
+        dashboard.put("with_alternatives", allConsequences.stream()
+                .filter(c -> c.getAlternativePaths() != null && !c.getAlternativePaths().isEmpty())
+                .collect(Collectors.toList()));
+
+        // Group by chapter and scene
+        Map<String, List<Consequence>> chapterSceneMap = new HashMap<>();
+        for (Consequence consequence : allConsequences) {
+            if (consequence.getChapterId() != null && consequence.getSceneId() != null) {
+                String key = consequence.getChapterId() + ":" + consequence.getSceneId();
+                chapterSceneMap.computeIfAbsent(key, k -> new ArrayList<>()).add(consequence);
+            }
+        }
+
+        for (Map.Entry<String, List<Consequence>> entry : chapterSceneMap.entrySet()) {
+            dashboard.put("chapter_scene_" + entry.getKey(), entry.getValue());
+        }
+
+        return dashboard;
     }
 }
