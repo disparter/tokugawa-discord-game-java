@@ -38,6 +38,66 @@ public class AssetServiceImpl implements AssetService {
 
     public AssetServiceImpl() {
         initializeFallbackImages();
+        // Initialize asset loading on service creation
+        loadAssets();
+    }
+
+    /**
+     * Load all assets from the file system.
+     * This method scans the assets directory and populates the asset maps.
+     */
+    private void loadAssets() {
+        try {
+            Path assetsPath = Paths.get(assetsBasePath);
+            if (!Files.exists(assetsPath)) {
+                logger.warn("Assets directory does not exist: {}", assetsPath);
+                return;
+            }
+
+            // Load background images
+            loadAssetsOfType("backgrounds", backgroundImages, ".jpg");
+
+            // Load character images
+            loadAssetsOfType("characters", characterImages, ".png");
+
+            // Load location images
+            loadAssetsOfType("locations", locationImages, ".jpg");
+
+            logger.info("Loaded {} background images, {} character images, and {} location images",
+                    backgroundImages.size(), characterImages.size(), locationImages.size());
+        } catch (Exception e) {
+            logger.error("Error loading assets", e);
+        }
+    }
+
+    /**
+     * Load assets of a specific type from the file system.
+     * 
+     * @param directory the directory to scan
+     * @param assetMap the map to populate
+     * @param extension the file extension to look for
+     */
+    private void loadAssetsOfType(String directory, Map<String, String> assetMap, String extension) {
+        try {
+            Path directoryPath = Paths.get(assetsBasePath, directory);
+            if (!Files.exists(directoryPath)) {
+                Files.createDirectories(directoryPath);
+                logger.info("Created directory: {}", directoryPath);
+                return;
+            }
+
+            Files.list(directoryPath)
+                .filter(path -> path.toString().endsWith(extension))
+                .forEach(path -> {
+                    String fileName = path.getFileName().toString();
+                    String assetId = fileName.substring(0, fileName.lastIndexOf('.'));
+                    String relativePath = directory + "/" + fileName;
+                    assetMap.put(assetId, relativePath);
+                    logger.debug("Loaded asset: {} -> {}", assetId, relativePath);
+                });
+        } catch (Exception e) {
+            logger.error("Error loading assets from directory: {}", directory, e);
+        }
     }
 
     /**
@@ -47,7 +107,86 @@ public class AssetServiceImpl implements AssetService {
         fallbackImages.put("background", "backgrounds/default_background.jpg");
         fallbackImages.put("character", "characters/default_character.png");
         fallbackImages.put("location", "locations/default_location.jpg");
+        fallbackImages.put("item", "items/default_item.png");
+        fallbackImages.put("event", "events/default_event.jpg");
+        fallbackImages.put("club", "clubs/default_club.png");
         fallbackImages.put("default", "default.png");
+
+        // Ensure fallback directories exist
+        createFallbackDirectories();
+
+        // Ensure fallback images exist
+        createDefaultFallbackImages();
+    }
+
+    /**
+     * Create the necessary directories for fallback images.
+     */
+    private void createFallbackDirectories() {
+        try {
+            Path assetsPath = Paths.get(assetsBasePath);
+            if (!Files.exists(assetsPath)) {
+                Files.createDirectories(assetsPath);
+                logger.info("Created assets directory: {}", assetsPath);
+            }
+
+            // Create directories for each asset type
+            String[] directories = {"backgrounds", "characters", "locations", "items", "events", "clubs"};
+            for (String dir : directories) {
+                Path dirPath = Paths.get(assetsBasePath, dir);
+                if (!Files.exists(dirPath)) {
+                    Files.createDirectories(dirPath);
+                    logger.info("Created directory: {}", dirPath);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error creating fallback directories", e);
+        }
+    }
+
+    /**
+     * Create default fallback images if they don't exist.
+     * This ensures that there's always a fallback image available.
+     */
+    private void createDefaultFallbackImages() {
+        try {
+            // Check and create the default fallback image
+            Path defaultPath = Paths.get(assetsBasePath, fallbackImages.get("default"));
+            if (!Files.exists(defaultPath)) {
+                createEmptyImageFile(defaultPath);
+                logger.info("Created default fallback image: {}", defaultPath);
+            }
+
+            // Check and create type-specific fallback images
+            for (Map.Entry<String, String> entry : fallbackImages.entrySet()) {
+                if (!"default".equals(entry.getKey())) {
+                    Path path = Paths.get(assetsBasePath, entry.getValue());
+                    if (!Files.exists(path)) {
+                        createEmptyImageFile(path);
+                        logger.info("Created fallback image for {}: {}", entry.getKey(), path);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error creating fallback images", e);
+        }
+    }
+
+    /**
+     * Create an empty image file at the specified path.
+     * This is a simple 1x1 pixel image that serves as a placeholder.
+     * 
+     * @param path the path where the image should be created
+     * @throws IOException if an I/O error occurs
+     */
+    private void createEmptyImageFile(Path path) throws IOException {
+        // Create parent directories if they don't exist
+        Files.createDirectories(path.getParent());
+
+        // Create an empty file
+        Files.createFile(path);
+
+        logger.debug("Created empty image file: {}", path);
     }
 
     @Override
@@ -55,12 +194,12 @@ public class AssetServiceImpl implements AssetService {
         try {
             // Try to find the image based on context
             String imagePath = findImagePathByContext(context);
-            
+
             // If image path is found, return the URL
             if (imagePath != null) {
                 return createUrl(imagePath);
             }
-            
+
             // If no image is found, return the default fallback image
             return getFallbackImageUrl("default");
         } catch (Exception e) {
@@ -79,7 +218,7 @@ public class AssetServiceImpl implements AssetService {
         try {
             // Try to find the image based on context
             String imagePath = findImagePathByContext(context);
-            
+
             // If image path is found, return the file
             if (imagePath != null) {
                 Path path = Paths.get(assetsBasePath, imagePath);
@@ -87,7 +226,7 @@ public class AssetServiceImpl implements AssetService {
                     return path.toFile();
                 }
             }
-            
+
             // If no image is found, return the default fallback image file
             String fallbackPath = fallbackImages.get("default");
             Path path = Paths.get(assetsBasePath, fallbackPath);
@@ -111,12 +250,12 @@ public class AssetServiceImpl implements AssetService {
             // Try to find the background image for the location
             String imagePath = backgroundImages.getOrDefault(location, 
                     "backgrounds/" + location + ".jpg");
-            
+
             Path path = Paths.get(assetsBasePath, imagePath);
             if (Files.exists(path)) {
                 return createUrl(imagePath);
             }
-            
+
             // If no image is found, return the fallback background image
             return getFallbackImageUrl("background");
         } catch (Exception e) {
@@ -136,12 +275,12 @@ public class AssetServiceImpl implements AssetService {
             // Try to find the character image
             String imagePath = characterImages.getOrDefault(characterId, 
                     "characters/" + characterId + ".png");
-            
+
             Path path = Paths.get(assetsBasePath, imagePath);
             if (Files.exists(path)) {
                 return createUrl(imagePath);
             }
-            
+
             // If no image is found, return the fallback character image
             return getFallbackImageUrl("character");
         } catch (Exception e) {
@@ -161,12 +300,12 @@ public class AssetServiceImpl implements AssetService {
             // Try to find the location image
             String imagePath = locationImages.getOrDefault(locationId, 
                     "locations/" + locationId + ".jpg");
-            
+
             Path path = Paths.get(assetsBasePath, imagePath);
             if (Files.exists(path)) {
                 return createUrl(imagePath);
             }
-            
+
             // If no image is found, return the fallback location image
             return getFallbackImageUrl("location");
         } catch (Exception e) {
@@ -193,11 +332,48 @@ public class AssetServiceImpl implements AssetService {
     @Override
     public URL getFallbackImageUrl(String assetType) {
         try {
+            // Get the fallback path for the specified asset type, or use the default if not found
             String fallbackPath = fallbackImages.getOrDefault(assetType, fallbackImages.get("default"));
+
+            // Check if the fallback image exists
+            Path path = Paths.get(assetsBasePath, fallbackPath);
+            if (!Files.exists(path)) {
+                // If the specific fallback doesn't exist, try to create it
+                try {
+                    createEmptyImageFile(path);
+                    logger.info("Created missing fallback image: {}", path);
+                } catch (Exception ex) {
+                    logger.warn("Could not create fallback image: {}", path, ex);
+
+                    // If we can't create the specific fallback, use the default fallback
+                    fallbackPath = fallbackImages.get("default");
+                    path = Paths.get(assetsBasePath, fallbackPath);
+
+                    // If the default fallback doesn't exist, create it
+                    if (!Files.exists(path)) {
+                        try {
+                            createEmptyImageFile(path);
+                            logger.info("Created missing default fallback image: {}", path);
+                        } catch (Exception e2) {
+                            logger.error("Could not create default fallback image: {}", path, e2);
+                            // At this point, we've tried everything, so we'll return a hardcoded URL
+                            return new URL("file:" + assetsBasePath + "/default.png");
+                        }
+                    }
+                }
+            }
+
             return createUrl(fallbackPath);
         } catch (Exception e) {
             logger.error("Error getting fallback image URL for asset type: {}", assetType, e);
-            return null;
+            try {
+                // Last resort: return a hardcoded URL to the default image
+                return new URL("file:" + assetsBasePath + "/default.png");
+            } catch (Exception ex) {
+                logger.error("Critical error: Could not create hardcoded fallback URL", ex);
+                // If all else fails, return null, but this should never happen
+                return null;
+            }
         }
     }
 
@@ -208,30 +384,55 @@ public class AssetServiceImpl implements AssetService {
      * @return the image path, or null if not found
      */
     private String findImagePathByContext(String context) {
-        // Check if the context is a location
+        if (context == null || context.isEmpty()) {
+            logger.warn("Empty context provided to findImagePathByContext");
+            return null;
+        }
+
+        logger.debug("Finding image path for context: {}", context);
+
+        // Check if the context contains multiple parts (e.g., "location:tokyo" or "character:hero:angry")
+        if (context.contains(":")) {
+            return handleComplexContext(context);
+        }
+
+        // Check if the context is directly in one of our maps
+        // Check if the context is a background
         if (backgroundImages.containsKey(context)) {
+            logger.debug("Found background image for context: {}", context);
             return backgroundImages.get(context);
         }
-        
+
         // Check if the context is a character
         if (characterImages.containsKey(context)) {
+            logger.debug("Found character image for context: {}", context);
             return characterImages.get(context);
         }
-        
-        // Check if the context is a location ID
+
+        // Check if the context is a location
         if (locationImages.containsKey(context)) {
+            logger.debug("Found location image for context: {}", context);
             return locationImages.get(context);
         }
-        
-        // Try to infer the type from the context
+
+        // Try to infer the type from the context naming pattern
         if (context.startsWith("background_") || context.contains("_background")) {
-            return "backgrounds/" + context + ".jpg";
+            String path = "backgrounds/" + context + ".jpg";
+            if (Files.exists(Paths.get(assetsBasePath, path))) {
+                return path;
+            }
         } else if (context.startsWith("character_") || context.contains("_character")) {
-            return "characters/" + context + ".png";
+            String path = "characters/" + context + ".png";
+            if (Files.exists(Paths.get(assetsBasePath, path))) {
+                return path;
+            }
         } else if (context.startsWith("location_") || context.contains("_location")) {
-            return "locations/" + context + ".jpg";
+            String path = "locations/" + context + ".jpg";
+            if (Files.exists(Paths.get(assetsBasePath, path))) {
+                return path;
+            }
         }
-        
+
         // If we can't determine the type, try different paths
         String[] possiblePaths = {
             "backgrounds/" + context + ".jpg",
@@ -240,15 +441,157 @@ public class AssetServiceImpl implements AssetService {
             context + ".jpg",
             context + ".png"
         };
-        
+
         for (String path : possiblePaths) {
             Path fullPath = Paths.get(assetsBasePath, path);
             if (Files.exists(fullPath)) {
+                logger.debug("Found image at path: {}", path);
                 return path;
             }
         }
-        
-        // If no image is found, return null
+
+        logger.debug("No image found for context: {}", context);
+        return null;
+    }
+
+    /**
+     * Handle complex context strings that contain multiple parts.
+     * Examples: "location:tokyo", "character:hero:angry", "background:school:night"
+     * 
+     * @param context the complex context string
+     * @return the image path, or null if not found
+     */
+    private String handleComplexContext(String context) {
+        String[] parts = context.split(":");
+        if (parts.length < 2) {
+            return null;
+        }
+
+        String type = parts[0].toLowerCase();
+        String id = parts[1];
+        String variant = parts.length > 2 ? parts[2] : null;
+
+        logger.debug("Complex context - Type: {}, ID: {}, Variant: {}", type, id, variant);
+
+        // Handle different types
+        switch (type) {
+            case "background":
+                return findBackgroundImage(id, variant);
+            case "character":
+                return findCharacterImage(id, variant);
+            case "location":
+                return findLocationImage(id, variant);
+            default:
+                logger.warn("Unknown asset type in context: {}", type);
+                return null;
+        }
+    }
+
+    /**
+     * Find a background image based on ID and variant.
+     * 
+     * @param id the background ID
+     * @param variant the variant (e.g., "night", "day", "rain")
+     * @return the image path, or null if not found
+     */
+    private String findBackgroundImage(String id, String variant) {
+        // Try with variant first
+        if (variant != null) {
+            String variantKey = id + "_" + variant;
+            if (backgroundImages.containsKey(variantKey)) {
+                return backgroundImages.get(variantKey);
+            }
+
+            // Try the path directly
+            String variantPath = "backgrounds/" + id + "_" + variant + ".jpg";
+            if (Files.exists(Paths.get(assetsBasePath, variantPath))) {
+                return variantPath;
+            }
+        }
+
+        // Try without variant
+        if (backgroundImages.containsKey(id)) {
+            return backgroundImages.get(id);
+        }
+
+        // Try the path directly
+        String path = "backgrounds/" + id + ".jpg";
+        if (Files.exists(Paths.get(assetsBasePath, path))) {
+            return path;
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a character image based on ID and variant.
+     * 
+     * @param id the character ID
+     * @param variant the variant (e.g., "angry", "happy", "sad")
+     * @return the image path, or null if not found
+     */
+    private String findCharacterImage(String id, String variant) {
+        // Try with variant first
+        if (variant != null) {
+            String variantKey = id + "_" + variant;
+            if (characterImages.containsKey(variantKey)) {
+                return characterImages.get(variantKey);
+            }
+
+            // Try the path directly
+            String variantPath = "characters/" + id + "_" + variant + ".png";
+            if (Files.exists(Paths.get(assetsBasePath, variantPath))) {
+                return variantPath;
+            }
+        }
+
+        // Try without variant
+        if (characterImages.containsKey(id)) {
+            return characterImages.get(id);
+        }
+
+        // Try the path directly
+        String path = "characters/" + id + ".png";
+        if (Files.exists(Paths.get(assetsBasePath, path))) {
+            return path;
+        }
+
+        return null;
+    }
+
+    /**
+     * Find a location image based on ID and variant.
+     * 
+     * @param id the location ID
+     * @param variant the variant (e.g., "interior", "exterior")
+     * @return the image path, or null if not found
+     */
+    private String findLocationImage(String id, String variant) {
+        // Try with variant first
+        if (variant != null) {
+            String variantKey = id + "_" + variant;
+            if (locationImages.containsKey(variantKey)) {
+                return locationImages.get(variantKey);
+            }
+
+            // Try the path directly
+            String variantPath = "locations/" + id + "_" + variant + ".jpg";
+            if (Files.exists(Paths.get(assetsBasePath, variantPath))) {
+                return variantPath;
+            }
+        }
+
+        // Try without variant
+        if (locationImages.containsKey(id)) {
+            return locationImages.get(id);
+        }
+
+        // Try the path directly
+        String path = "locations/" + id + ".jpg";
+        if (Files.exists(Paths.get(assetsBasePath, path))) {
+            return path;
+        }
+
         return null;
     }
 
