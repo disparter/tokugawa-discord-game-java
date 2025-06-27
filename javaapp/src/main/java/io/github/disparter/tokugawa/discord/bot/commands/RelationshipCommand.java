@@ -1,6 +1,6 @@
 package io.github.disparter.tokugawa.discord.bot.commands;
 
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.entity.User;
@@ -45,11 +45,11 @@ public class RelationshipCommand implements SlashCommand {
     }
 
     @Override
-    public Mono<Void> execute(SlashCommandInteractionEvent event) {
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
         return Mono.justOrEmpty(event.getInteraction().getUser())
                 .flatMap(user -> {
                     String userId = user.getId().asString();
-                    
+
                     // Check if player exists
                     Player player = playerService.findByDiscordId(userId);
                     if (player == null) {
@@ -57,19 +57,19 @@ public class RelationshipCommand implements SlashCommand {
                                 .withContent("Você precisa se registrar primeiro usando o comando /register.")
                                 .withEphemeral(true);
                     }
-                    
+
                     // Get the subcommand
                     Optional<ApplicationCommandInteractionOption> subcommandOption = 
                             event.getOptions().stream().findFirst();
-                    
+
                     if (subcommandOption.isEmpty()) {
                         return event.reply()
                                 .withContent("Comando inválido. Use /relacionamento listar, /relacionamento ver, ou /relacionamento interagir.")
                                 .withEphemeral(true);
                     }
-                    
+
                     String subcommand = subcommandOption.get().getName();
-                    
+
                     switch (subcommand) {
                         case "listar":
                             return handleListRelationships(event, player);
@@ -84,56 +84,56 @@ public class RelationshipCommand implements SlashCommand {
                     }
                 });
     }
-    
-    private Mono<Void> handleListRelationships(SlashCommandInteractionEvent event, Player player) {
+
+    private Mono<Void> handleListRelationships(ChatInputInteractionEvent event, Player player) {
         List<Relationship> relationships = relationshipService.getRelationshipsForPlayer(player.getId());
-        
+
         if (relationships.isEmpty()) {
             return event.reply()
                     .withContent("Você ainda não tem relacionamentos com NPCs.")
                     .withEphemeral(true);
         }
-        
+
         StringBuilder response = new StringBuilder("Seus relacionamentos:\n\n");
-        
+
         for (Relationship relationship : relationships) {
             NPC npc = relationship.getNpc();
             response.append("**").append(npc.getName()).append("**: ")
                    .append(formatStatus(relationship.getStatus()))
                    .append(" (Afinidade: ").append(relationship.getAffinity()).append(")\n");
         }
-        
+
         return event.reply()
                 .withContent(response.toString())
                 .withEphemeral(true);
     }
-    
-    private Mono<Void> handleViewRelationship(SlashCommandInteractionEvent event, Player player) {
+
+    private Mono<Void> handleViewRelationship(ChatInputInteractionEvent event, Player player) {
         Optional<ApplicationCommandInteractionOption> npcOption = 
                 event.getOption("npc");
-        
+
         if (npcOption.isEmpty() || npcOption.get().getValue().isEmpty()) {
             return event.reply()
                     .withContent("Você precisa especificar um NPC.")
                     .withEphemeral(true);
         }
-        
+
         String npcName = npcOption.get().getValue().get().asString();
         NPC npc = npcService.findByName(npcName);
-        
+
         if (npc == null) {
             return event.reply()
                     .withContent("NPC não encontrado: " + npcName)
                     .withEphemeral(true);
         }
-        
+
         Relationship relationship = relationshipService.getRelationship(player.getId(), npc.getId());
-        
+
         StringBuilder response = new StringBuilder("Seu relacionamento com **")
                 .append(npc.getName()).append("**:\n\n")
                 .append("Status: ").append(formatStatus(relationship.getStatus())).append("\n")
                 .append("Afinidade: ").append(relationship.getAffinity()).append("\n");
-        
+
         // Add triggered events if any
         if (!relationship.getTriggeredEvents().isEmpty()) {
             response.append("\nEventos desbloqueados:\n");
@@ -141,50 +141,50 @@ public class RelationshipCommand implements SlashCommand {
                 response.append("- ").append(formatEventName(eventId)).append("\n");
             }
         }
-        
+
         // Check if there's a potential romance event
         String potentialEvent = relationshipService.triggerRomanceEvent(player.getId(), npc.getId());
         if (potentialEvent != null) {
             response.append("\n**Novo evento disponível!** Use /evento iniciar para participar.");
         }
-        
+
         return event.reply()
                 .withContent(response.toString())
                 .withEphemeral(true);
     }
-    
-    private Mono<Void> handleInteractWithNPC(SlashCommandInteractionEvent event, Player player) {
+
+    private Mono<Void> handleInteractWithNPC(ChatInputInteractionEvent event, Player player) {
         Optional<ApplicationCommandInteractionOption> npcOption = 
                 event.getOption("npc");
         Optional<ApplicationCommandInteractionOption> interactionOption = 
                 event.getOption("interacao");
-        
+
         if (npcOption.isEmpty() || npcOption.get().getValue().isEmpty() ||
             interactionOption.isEmpty() || interactionOption.get().getValue().isEmpty()) {
             return event.reply()
                     .withContent("Você precisa especificar um NPC e um tipo de interação.")
                     .withEphemeral(true);
         }
-        
+
         String npcName = npcOption.get().getValue().get().asString();
         String interactionType = interactionOption.get().getValue().get().asString();
-        
+
         NPC npc = npcService.findByName(npcName);
-        
+
         if (npc == null) {
             return event.reply()
                     .withContent("NPC não encontrado: " + npcName)
                     .withEphemeral(true);
         }
-        
+
         try {
             Relationship updatedRelationship = 
                     relationshipService.updateAffinityByInteraction(player.getId(), npc.getId(), interactionType);
-            
+
             String response = "Você " + formatInteraction(interactionType) + " com **" + npc.getName() + "**.\n" +
                     "Afinidade atual: " + updatedRelationship.getAffinity() + "\n" +
                     "Status: " + formatStatus(updatedRelationship.getStatus());
-            
+
             return event.reply()
                     .withContent(response)
                     .withEphemeral(true);
@@ -194,7 +194,7 @@ public class RelationshipCommand implements SlashCommand {
                     .withEphemeral(true);
         }
     }
-    
+
     private String formatStatus(RelationshipStatus status) {
         switch (status) {
             case STRANGER: return "Desconhecido";
@@ -210,7 +210,7 @@ public class RelationshipCommand implements SlashCommand {
             default: return status.name();
         }
     }
-    
+
     private String formatInteraction(String interactionType) {
         switch (interactionType) {
             case "GREET": return "cumprimentou";
@@ -225,7 +225,7 @@ public class RelationshipCommand implements SlashCommand {
             default: return "interagiu";
         }
     }
-    
+
     private String formatEventName(String eventId) {
         // Convert event_id to a readable format
         return eventId.replace("_", " ")

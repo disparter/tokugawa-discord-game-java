@@ -59,4 +59,14 @@ public class Progress {
     @CollectionTable(name = "triggered_events", joinColumns = @JoinColumn(name = "progress_id"))
     @Column(name = "event_value", columnDefinition = "TEXT")
     private Map<String, String> triggeredEvents = new HashMap<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "player_relationships", joinColumns = @JoinColumn(name = "progress_id"))
+    @Column(name = "relationship_value")
+    private Map<String, Integer> relationships = new HashMap<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "faction_reputations", joinColumns = @JoinColumn(name = "progress_id"))
+    @Column(name = "reputation_value")
+    private Map<String, Integer> factionReputations = new HashMap<>();
 }

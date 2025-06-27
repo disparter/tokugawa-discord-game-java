@@ -1,6 +1,6 @@
 package io.github.disparter.tokugawa.discord.bot.commands;
 
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.entity.User;
 import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.services.PlayerService;
@@ -28,7 +28,7 @@ public class RegisterCommand implements SlashCommand {
     }
 
     @Override
-    public Mono<Void> execute(SlashCommandInteractionEvent event) {
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
         return Mono.justOrEmpty(event.getInteraction().getUser())
                 .flatMap(user -> {
                     String userId = user.getId().asString();

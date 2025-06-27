@@ -186,35 +186,47 @@ public class LocationServiceImpl implements LocationService {
         // In a real implementation, this would be more sophisticated
 
         // Example: Update player stats based on event type
-        switch (event.getType()) {
-            case "COMBAT":
-                // Simulate a combat event
-                boolean won = random.nextBoolean();
-                if (won) {
-                    player.setExp(player.getExp() + 10);
+        if (event.getType() != null) {
+            switch (event.getType()) {
+                case BASE:
+                    // Basic event
+                    player.setExp(player.getExp() + 5);
+                    break;
+
+                case CLIMACTIC:
+                    // Climactic event
+                    boolean won = random.nextBoolean();
+                    if (won) {
+                        player.setExp(player.getExp() + 15);
+                        // Could also add items to inventory, etc.
+                    } else {
+                        // Maybe lose some health or items
+                    }
+                    break;
+
+                case RANDOM:
+                    // Random event
+                    player.setExp(player.getExp() + 8);
                     // Could also add items to inventory, etc.
-                } else {
-                    // Maybe lose some health or items
-                }
-                break;
+                    break;
 
-            case "DISCOVERY":
-                // Player discovers something
-                player.setExp(player.getExp() + 5);
-                // Could also add items to inventory, etc.
-                break;
+                case SEASONAL:
+                    // Seasonal event
+                    player.setReputation(player.getReputation() + 3);
+                    break;
 
-            case "SOCIAL":
-                // Social interaction event
-                player.setReputation(player.getReputation() + 2);
-                break;
+                case ROMANCE:
+                    // Romance event
+                    player.setReputation(player.getReputation() + 2);
+                    break;
 
-            case "QUEST":
-                // Quest-related event
-                // Could add a quest to the player's quest list
-                break;
+                case CHOICE_TRIGGERED:
+                    // Choice-triggered event
+                    player.setExp(player.getExp() + 10);
+                    break;
 
-            // Add more event types as needed
+                // Add more event types as needed
+            }
         }
 
         // Save the updated player

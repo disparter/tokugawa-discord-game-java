@@ -1,7 +1,6 @@
 package io.github.disparter.tokugawa.discord.bot.commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.entity.User;
@@ -50,11 +49,11 @@ public class EventCommand implements SlashCommand {
     }
 
     @Override
-    public Mono<Void> execute(SlashCommandInteractionEvent event) {
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
         return Mono.justOrEmpty(event.getInteraction().getUser())
                 .flatMap(user -> {
                     String userId = user.getId().asString();
-                    
+
                     // Get the player
                     Player player = playerService.findByDiscordId(userId);
                     if (player == null) {
@@ -99,7 +98,7 @@ public class EventCommand implements SlashCommand {
      * @param player the player
      * @return a Mono that completes when the command execution is done
      */
-    private Mono<Void> showAvailableEvents(SlashCommandInteractionEvent event, Player player) {
+    private Mono<Void> showAvailableEvents(ChatInputInteractionEvent event, Player player) {
         List<Event> availableEvents = eventService.getAvailableEventsForPlayer(player.getId());
 
         if (availableEvents.isEmpty()) {
@@ -133,7 +132,7 @@ public class EventCommand implements SlashCommand {
      * @param player the player
      * @return a Mono that completes when the command execution is done
      */
-    private Mono<Void> showSeasonalEvents(SlashCommandInteractionEvent event, Player player) {
+    private Mono<Void> showSeasonalEvents(ChatInputInteractionEvent event, Player player) {
         List<Event> seasonalEvents = eventService.getAvailableSeasonalEventsForPlayer(player.getId());
 
         if (seasonalEvents.isEmpty()) {
@@ -177,7 +176,7 @@ public class EventCommand implements SlashCommand {
      * @param player the player
      * @return a Mono that completes when the command execution is done
      */
-    private Mono<Void> showRandomEvents(SlashCommandInteractionEvent event, Player player) {
+    private Mono<Void> showRandomEvents(ChatInputInteractionEvent event, Player player) {
         List<Event> randomEvents = eventService.checkForRandomEvents(player.getId());
 
         if (randomEvents.isEmpty()) {
@@ -211,7 +210,7 @@ public class EventCommand implements SlashCommand {
      * @param player the player
      * @return a Mono that completes when the command execution is done
      */
-    private Mono<Void> participateInEvent(SlashCommandInteractionEvent event, Player player) {
+    private Mono<Void> participateInEvent(ChatInputInteractionEvent event, Player player) {
         Optional<String> eventIdOpt = event.getOption("event_id")
                 .flatMap(ApplicationCommandInteractionOption::getValue)
                 .map(ApplicationCommandInteractionOptionValue::asString);
@@ -255,7 +254,7 @@ public class EventCommand implements SlashCommand {
      * @param player the player
      * @return a Mono that completes when the command execution is done
      */
-    private Mono<Void> showCalendar(SlashCommandInteractionEvent event, Player player) {
+    private Mono<Void> showCalendar(ChatInputInteractionEvent event, Player player) {
         Season currentSeason = gameCalendarService.getCurrentSeason();
         String seasonName = formatSeason(currentSeason);
         String currentDate = gameCalendarService.getCurrentDate().format(DATE_FORMATTER);

@@ -188,4 +188,21 @@ public class ReputationServiceImpl implements ReputationService {
         int reputation = getReputation(playerId);
         return reputation >= threshold;
     }
+
+    @Override
+    @Transactional
+    public Player updateFactionReputation(Long playerId, String factionId, int change) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        // In a real implementation, this would update faction-specific reputation
+        // For now, we'll just update the player's general reputation
+        if (change > 0) {
+            return increaseReputation(playerId, change);
+        } else if (change < 0) {
+            return decreaseReputation(playerId, Math.abs(change));
+        } else {
+            return player;
+        }
+    }
 }

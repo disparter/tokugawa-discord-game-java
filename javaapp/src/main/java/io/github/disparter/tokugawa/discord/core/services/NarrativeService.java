@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Service interface for managing narrative-related operations.
- * This includes chapter management, choice processing, and narrative validation.
+ * Service interface for narrative operations.
+ * This service manages the narrative flow, including chapter progression,
+ * choice processing, and narrative validation.
  */
 public interface NarrativeService {
 
@@ -15,14 +16,14 @@ public interface NarrativeService {
      * Find a chapter by its ID.
      *
      * @param id the chapter ID
-     * @return the chapter if found, or null
+     * @return the chapter, if found, or null
      */
     Chapter findChapterById(Long id);
 
     /**
-     * Get all available chapters.
+     * Get all chapters.
      *
-     * @return list of all chapters
+     * @return the list of all chapters
      */
     List<Chapter> getAllChapters();
 
@@ -30,7 +31,7 @@ public interface NarrativeService {
      * Get chapters available for a player.
      *
      * @param playerId the player ID
-     * @return list of available chapters
+     * @return the list of available chapters
      */
     List<Chapter> getAvailableChaptersForPlayer(Long playerId);
 
@@ -68,4 +69,14 @@ public interface NarrativeService {
      * @return a list of validation errors, or an empty list if no errors were found
      */
     List<String> validateNarrative();
+
+    /**
+     * Update player progress based on a duel result.
+     *
+     * @param playerId the player ID
+     * @param npcId the NPC ID
+     * @param playerWon whether the player won the duel
+     * @return true if the progress was updated successfully, false otherwise
+     */
+    boolean updateProgressFromDuel(Long playerId, Long npcId, Boolean playerWon);
 }

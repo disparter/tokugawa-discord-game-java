@@ -1,6 +1,6 @@
 package io.github.disparter.tokugawa.discord.bot.commands;
 
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.entity.User;
 import io.github.disparter.tokugawa.discord.core.models.Player;
@@ -41,7 +41,7 @@ public class ReputationCommand implements SlashCommand {
     }
 
     @Override
-    public Mono<Void> execute(SlashCommandInteractionEvent event) {
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
         return Mono.justOrEmpty(event.getInteraction().getUser())
                 .flatMap(user -> {
                     String userId = user.getId().asString();
@@ -78,7 +78,7 @@ public class ReputationCommand implements SlashCommand {
                 });
     }
 
-    private Mono<Void> handleViewReputation(SlashCommandInteractionEvent event, Player player) {
+    private Mono<Void> handleViewReputation(ChatInputInteractionEvent event, Player player) {
         int reputation = reputationService.getReputation(player.getId());
         int rank = reputationService.getReputationRank(player.getId());
 
@@ -109,7 +109,7 @@ public class ReputationCommand implements SlashCommand {
                 .withEphemeral(true);
     }
 
-    private Mono<Void> handleViewRanking(SlashCommandInteractionEvent event, Player player) {
+    private Mono<Void> handleViewRanking(ChatInputInteractionEvent event, Player player) {
         List<Player> rankedPlayers = reputationService.getRankedPlayers();
 
         if (rankedPlayers.isEmpty()) {

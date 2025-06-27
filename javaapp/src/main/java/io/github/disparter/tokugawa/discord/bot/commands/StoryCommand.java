@@ -1,6 +1,6 @@
 package io.github.disparter.tokugawa.discord.bot.commands;
 
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import io.github.disparter.tokugawa.discord.core.models.Chapter;
@@ -39,11 +39,11 @@ public class StoryCommand implements SlashCommand {
     }
 
     @Override
-    public Mono<Void> execute(SlashCommandInteractionEvent event) {
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
         return Mono.justOrEmpty(event.getInteraction().getUser())
                 .flatMap(user -> {
                     String userId = user.getId().asString();
-                    
+
                     // Check if player exists
                     Player player = playerService.findByDiscordId(userId);
                     if (player == null) {
@@ -51,19 +51,19 @@ public class StoryCommand implements SlashCommand {
                                 .withContent("Você precisa se registrar primeiro usando o comando /register.")
                                 .withEphemeral(true);
                     }
-                    
+
                     // Get the subcommand
                     Optional<ApplicationCommandInteractionOption> subcommandOption = 
                             event.getOptions().stream().findFirst();
-                    
+
                     if (subcommandOption.isEmpty()) {
                         return event.reply()
                                 .withContent("Comando inválido. Use /historia iniciar [capitulo_id].")
                                 .withEphemeral(true);
                     }
-                    
+
                     String subcommand = subcommandOption.get().getName();
-                    
+
                     if ("iniciar".equals(subcommand)) {
                         return handleStartChapter(event, player);
                     } else {
@@ -73,20 +73,20 @@ public class StoryCommand implements SlashCommand {
                     }
                 });
     }
-    
-    private Mono<Void> handleStartChapter(SlashCommandInteractionEvent event, Player player) {
+
+    private Mono<Void> handleStartChapter(ChatInputInteractionEvent event, Player player) {
         // Get the chapter ID from the command options
         Optional<ApplicationCommandInteractionOption> chapterOption = 
                 event.getOption("capitulo_id");
-        
+
         if (chapterOption.isEmpty() || chapterOption.get().getValue().isEmpty()) {
             return event.reply()
                     .withContent("Você precisa especificar um ID de capítulo. Use /historia iniciar [capitulo_id].")
                     .withEphemeral(true);
         }
-        
+
         String chapterId = chapterOption.get().getValue().get().asString();
-        
+
         // Find the chapter by ID
         Chapter chapter = narrativeService.findChapterById(Long.parseLong(chapterId));
         if (chapter == null) {
@@ -94,7 +94,7 @@ public class StoryCommand implements SlashCommand {
                     .withContent("Capítulo não encontrado: " + chapterId)
                     .withEphemeral(true);
         }
-        
+
         // Start the chapter
         chapter = narrativeService.startChapter(Long.parseLong(chapterId), player.getId());
         if (chapter == null) {
@@ -102,7 +102,7 @@ public class StoryCommand implements SlashCommand {
                     .withContent("Não foi possível iniciar o capítulo: " + chapterId)
                     .withEphemeral(true);
         }
-        
+
         // Get the player's progress to display the first dialogue
         Progress progress = progressService.getProgressByPlayerId(player.getId());
         if (progress == null || progress.getCurrentChapterId() == null) {
@@ -110,18 +110,18 @@ public class StoryCommand implements SlashCommand {
                     .withContent("Erro ao iniciar o capítulo. Progresso não encontrado.")
                     .withEphemeral(true);
         }
-        
+
         // Display the first dialogue
         String firstDialogue = "...";
         if (chapter.getDialogues() != null && !chapter.getDialogues().isEmpty()) {
             firstDialogue = chapter.getDialogues().get(0);
         }
-        
+
         StringBuilder response = new StringBuilder("**")
                 .append(chapter.getTitle())
                 .append("**\n\n")
                 .append(firstDialogue);
-        
+
         return event.reply()
                 .withContent(response.toString())
                 .withEphemeral(false);

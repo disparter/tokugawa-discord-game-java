@@ -1,6 +1,6 @@
 package io.github.disparter.tokugawa.discord.bot.commands;
 
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import io.github.disparter.tokugawa.discord.core.models.Chapter;
@@ -41,11 +41,11 @@ public class ChoiceCommand implements SlashCommand {
     }
 
     @Override
-    public Mono<Void> execute(SlashCommandInteractionEvent event) {
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
         return Mono.justOrEmpty(event.getInteraction().getUser())
                 .flatMap(user -> {
                     String userId = user.getId().asString();
-                    
+
                     // Check if player exists
                     Player player = playerService.findByDiscordId(userId);
                     if (player == null) {
@@ -53,17 +53,17 @@ public class ChoiceCommand implements SlashCommand {
                                 .withContent("Você precisa se registrar primeiro usando o comando /register.")
                                 .withEphemeral(true);
                     }
-                    
+
                     // Get the choice index from the command options
                     Optional<ApplicationCommandInteractionOption> indexOption = 
                             event.getOption("indice");
-                    
+
                     if (indexOption.isEmpty() || indexOption.get().getValue().isEmpty()) {
                         return event.reply()
                                 .withContent("Você precisa especificar um índice de escolha. Use /escolha [indice].")
                                 .withEphemeral(true);
                     }
-                    
+
                     // Parse the choice index
                     int choiceIndex;
                     try {
@@ -73,7 +73,7 @@ public class ChoiceCommand implements SlashCommand {
                                 .withContent("Índice de escolha inválido. Use um número inteiro.")
                                 .withEphemeral(true);
                     }
-                    
+
                     // Get the player's progress
                     Progress progress = progressService.getProgressByPlayerId(player.getId());
                     if (progress == null || progress.getCurrentChapterId() == null) {
@@ -81,19 +81,19 @@ public class ChoiceCommand implements SlashCommand {
                                 .withContent("Você não está em nenhum capítulo atualmente. Use /historia iniciar [capitulo_id] para começar um capítulo.")
                                 .withEphemeral(true);
                     }
-                    
+
                     // Process the choice
                     Map<String, Object> result = narrativeService.processChoice(player.getId(), choiceIndex);
-                    
+
                     if (!(Boolean) result.getOrDefault("success", false)) {
                         return event.reply()
                                 .withContent("Erro ao processar escolha: " + result.getOrDefault("error", "Erro desconhecido"))
                                 .withEphemeral(true);
                     }
-                    
+
                     // Get the updated progress
                     Progress updatedProgress = (Progress) result.get("progress");
-                    
+
                     // Get the current chapter
                     Chapter chapter = narrativeService.findChapterById(Long.valueOf(updatedProgress.getCurrentChapterId()));
                     if (chapter == null) {
@@ -101,39 +101,39 @@ public class ChoiceCommand implements SlashCommand {
                                 .withContent("Erro ao obter o capítulo atual.")
                                 .withEphemeral(true);
                     }
-                    
+
                     // Get the next dialogue
                     int nextDialogueIndex = updatedProgress.getCurrentDialogueIndex();
                     String nextDialogue = "...";
                     List<String> dialogues = chapter.getDialogues();
-                    
+
                     if (dialogues != null && !dialogues.isEmpty() && nextDialogueIndex < dialogues.size()) {
                         nextDialogue = dialogues.get(nextDialogueIndex);
                     }
-                    
+
                     // Check if we need to move to the next chapter
                     if (result.containsKey("next_chapter")) {
                         Chapter nextChapter = (Chapter) result.get("next_chapter");
-                        
+
                         StringBuilder response = new StringBuilder("**Escolha processada!**\n\n")
                                 .append("Você avançou para o próximo capítulo: **")
                                 .append(nextChapter.getTitle())
                                 .append("**\n\n");
-                        
+
                         // Get the first dialogue of the next chapter
                         if (nextChapter.getDialogues() != null && !nextChapter.getDialogues().isEmpty()) {
                             response.append(nextChapter.getDialogues().get(0));
                         }
-                        
+
                         return event.reply()
                                 .withContent(response.toString())
                                 .withEphemeral(false);
                     }
-                    
+
                     // Display the next dialogue
                     StringBuilder response = new StringBuilder("**Escolha processada!**\n\n")
                             .append(nextDialogue);
-                    
+
                     return event.reply()
                             .withContent(response.toString())
                             .withEphemeral(false);

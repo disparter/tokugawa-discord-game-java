@@ -1,6 +1,6 @@
 package io.github.disparter.tokugawa.discord.bot.listeners;
 
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import io.github.disparter.tokugawa.discord.bot.commands.SlashCommand;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -31,26 +31,26 @@ public class SlashCommandListener {
                         SlashCommand::getName,
                         Function.identity()
                 ));
-        
+
         System.out.println("Registered slash commands: " + commands.keySet());
     }
 
     /**
-     * Handles an incoming slash command interaction event.
+     * Handles an incoming chat input interaction event.
      * This method is called by the Discord bot when a slash command is received.
      * 
-     * @param event The slash command interaction event
+     * @param event The chat input interaction event
      * @return A Mono that completes when the command execution is done
      */
-    public Mono<Void> handle(SlashCommandInteractionEvent event) {
+    public Mono<Void> handle(ChatInputInteractionEvent event) {
         String commandName = event.getCommandName();
-        
+
         return Mono.justOrEmpty(commands.get(commandName))
                 .flatMap(command -> command.execute(event))
                 .onErrorResume(error -> {
                     System.err.println("Error executing command '" + commandName + "': " + error.getMessage());
                     error.printStackTrace();
-                    
+
                     return event.reply()
                             .withContent("Ocorreu um erro ao executar o comando. Por favor, tente novamente mais tarde.")
                             .withEphemeral(true);

@@ -98,4 +98,12 @@ public interface PlayerService {
      * @return the updated player
      */
     Player updateReputationFromSocialInteraction(Long playerId, Long npcId, boolean positive);
+
+    /**
+     * Update a player's attributes.
+     *
+     * @param player the player to update
+     * @return the updated player
+     */
+    Player updatePlayerAttributes(Player player);
 }

@@ -2,7 +2,7 @@ package io.github.disparter.tokugawa.discord.bot;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
-import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import io.github.disparter.tokugawa.discord.bot.listeners.SlashCommandListener;
 import io.github.disparter.tokugawa.discord.core.events.EventsManager;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public class DiscordBot {
 
             if (gatewayClient != null) {
                 // Register the slash command listener
-                gatewayClient.on(SlashCommandInteractionEvent.class, slashCommandListener::handle)
+                gatewayClient.on(ChatInputInteractionEvent.class, slashCommandListener::handle)
                         .subscribe();
 
                 logger.info("Discord bot connected successfully!");

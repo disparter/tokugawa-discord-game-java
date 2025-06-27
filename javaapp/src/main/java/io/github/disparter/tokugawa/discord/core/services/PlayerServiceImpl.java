@@ -149,4 +149,10 @@ public class PlayerServiceImpl implements PlayerService {
             return decreaseReputation(playerId, -socialNegativeReputationChange);
         }
     }
+
+    @Override
+    @Transactional
+    public Player updatePlayerAttributes(Player player) {
+        return playerRepository.save(player);
+    }
 }

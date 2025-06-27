@@ -25,6 +25,15 @@ public interface ProgressRepository extends JpaRepository<Progress, Long> {
     Optional<Progress> findByPlayer(Player player);
 
     /**
+     * Find progress by player ID.
+     *
+     * @param playerId the player ID
+     * @return the progress, if found
+     */
+    @Query("SELECT p FROM Progress p WHERE p.player.id = :playerId")
+    Optional<Progress> findByPlayerId(@Param("playerId") Long playerId);
+
+    /**
      * Find progress by current arc.
      *
      * @param currentArc the current arc

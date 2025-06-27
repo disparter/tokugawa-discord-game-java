@@ -6,7 +6,7 @@ import io.github.disparter.tokugawa.discord.core.models.Player;
  * Service interface for managing player reputation.
  */
 public interface ReputationService {
-    
+
     /**
      * Get the current reputation of a player.
      *
@@ -14,7 +14,7 @@ public interface ReputationService {
      * @return the player's reputation
      */
     int getReputation(Long playerId);
-    
+
     /**
      * Increase a player's reputation.
      *
@@ -23,7 +23,7 @@ public interface ReputationService {
      * @return the updated player
      */
     Player increaseReputation(Long playerId, int amount);
-    
+
     /**
      * Decrease a player's reputation.
      *
@@ -32,7 +32,7 @@ public interface ReputationService {
      * @return the updated player
      */
     Player decreaseReputation(Long playerId, int amount);
-    
+
     /**
      * Update reputation based on a story decision.
      *
@@ -41,7 +41,7 @@ public interface ReputationService {
      * @return the updated player
      */
     Player updateReputationByDecision(Long playerId, String decisionId);
-    
+
     /**
      * Update reputation based on a duel outcome.
      *
@@ -51,7 +51,7 @@ public interface ReputationService {
      * @return the updated player
      */
     Player updateReputationByDuel(Long playerId, boolean won, int opponentLevel);
-    
+
     /**
      * Update reputation based on a social interaction.
      *
@@ -61,14 +61,14 @@ public interface ReputationService {
      * @return the updated player
      */
     Player updateReputationBySocialInteraction(Long playerId, String interactionType, Long targetId);
-    
+
     /**
      * Get players ranked by reputation.
      *
      * @return list of players sorted by reputation
      */
     java.util.List<Player> getRankedPlayers();
-    
+
     /**
      * Get the reputation rank of a player.
      *
@@ -76,7 +76,7 @@ public interface ReputationService {
      * @return the player's rank
      */
     int getReputationRank(Long playerId);
-    
+
     /**
      * Check if a player has reached a specific reputation threshold.
      *
@@ -85,4 +85,14 @@ public interface ReputationService {
      * @return true if the player's reputation is at or above the threshold
      */
     boolean hasReachedReputationThreshold(Long playerId, int threshold);
+
+    /**
+     * Update faction reputation.
+     *
+     * @param playerId the player ID
+     * @param factionId the faction ID
+     * @param change the amount to change
+     * @return the updated player
+     */
+    Player updateFactionReputation(Long playerId, String factionId, int change);
 }

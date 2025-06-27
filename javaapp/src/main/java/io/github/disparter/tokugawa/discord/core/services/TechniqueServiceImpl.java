@@ -54,7 +54,9 @@ public class TechniqueServiceImpl implements TechniqueService {
     @Override
     public Optional<Technique> findByName(String name) {
         // This method is not directly provided by the repository, so we need to implement it
-        return techniqueRepository.findAll().stream()
+        List<Technique> techniques = new ArrayList<>();
+        techniqueRepository.findAll().forEach(techniques::add);
+        return techniques.stream()
                 .filter(technique -> technique.getName().equalsIgnoreCase(name))
                 .findFirst();
     }
@@ -99,9 +101,9 @@ public class TechniqueServiceImpl implements TechniqueService {
 
         // Save the technique and player
         techniqueRepository.save(technique);
-        
+
         logger.info("Taught technique {} to player {}", technique.getName(), player.getUsername());
-        
+
         return playerRepository.save(player);
     }
 
@@ -125,9 +127,9 @@ public class TechniqueServiceImpl implements TechniqueService {
 
         // Save the technique and NPC
         techniqueRepository.save(technique);
-        
+
         logger.info("Taught technique {} to NPC {}", technique.getName(), npc.getName());
-        
+
         return npcRepository.save(npc);
     }
 
@@ -189,7 +191,7 @@ public class TechniqueServiceImpl implements TechniqueService {
 
         logger.info("Evolved technique {} for player {} with {} power points", 
                 technique.getName(), player.getUsername(), powerPoints);
-        
+
         // Save and return the evolved technique
         return techniqueRepository.save(technique);
     }
@@ -197,10 +199,10 @@ public class TechniqueServiceImpl implements TechniqueService {
     @Override
     public Map<String, Integer> getTechniqueEvolutionRequirements(Technique technique) {
         Map<String, Integer> requirements = new HashMap<>();
-        
+
         // Base requirements
         requirements.put("powerPoints", 10); // Base requirement of 10 power points
-        
+
         // Additional requirements based on technique type
         switch (technique.getType()) {
             case ATTACK:
@@ -221,7 +223,7 @@ public class TechniqueServiceImpl implements TechniqueService {
                 requirements.put("powerPoints", 30); // Ultimate techniques require even more power points
                 break;
         }
-        
+
         // If the technique already has power points, increase the requirement
         if (technique.getPowerPoints() != null && technique.getPowerPoints() > 0) {
             int currentPowerPoints = technique.getPowerPoints();
@@ -229,14 +231,14 @@ public class TechniqueServiceImpl implements TechniqueService {
             // Each evolution becomes more expensive
             requirements.put("powerPoints", currentRequirement + (currentPowerPoints / 10) * 5);
         }
-        
+
         return requirements;
     }
 
     @Override
     public Map<String, String> getTechniqueEffectDescriptions() {
         Map<String, String> effectDescriptions = new HashMap<>();
-        
+
         effectDescriptions.put("damage", "Increases the damage dealt by the technique");
         effectDescriptions.put("healing", "Increases the healing provided by the technique");
         effectDescriptions.put("defense", "Increases the defense bonus provided by the technique");
@@ -246,7 +248,7 @@ public class TechniqueServiceImpl implements TechniqueService {
         effectDescriptions.put("bleedChance", "Increases the chance to cause bleeding");
         effectDescriptions.put("burnChance", "Increases the chance to cause burning");
         effectDescriptions.put("poisonChance", "Increases the chance to poison the opponent");
-        
+
         return effectDescriptions;
     }
 

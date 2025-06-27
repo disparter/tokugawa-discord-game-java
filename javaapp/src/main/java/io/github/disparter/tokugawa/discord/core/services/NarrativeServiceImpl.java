@@ -83,11 +83,11 @@ public class NarrativeServiceImpl implements NarrativeService {
             return new ArrayList<>();
         }
 
-        Progress progress = progressRepository.findByPlayerId(playerId).orElse(null);
+        Progress progress = progressRepository.findByPlayer(player).orElse(null);
         if (progress == null) {
             logger.info("No progress found for player {}, creating new progress", playerId);
             progress = new Progress();
-            progress.setPlayerId(playerId);
+            progress.setPlayer(player);
             progress.setCompletedChapters(new ArrayList<>());
             progressRepository.save(progress);
         }
@@ -127,9 +127,9 @@ public class NarrativeServiceImpl implements NarrativeService {
             return null;
         }
 
-        Progress progress = progressRepository.findByPlayerId(playerId).orElse(new Progress());
+        Progress progress = progressRepository.findByPlayer(player).orElse(new Progress());
         if (progress.getId() == null) {
-            progress.setPlayerId(playerId);
+            progress.setPlayer(player);
             progress.setCompletedChapters(new ArrayList<>());
         }
 
@@ -157,7 +157,7 @@ public class NarrativeServiceImpl implements NarrativeService {
             return null;
         }
 
-        Progress progress = progressRepository.findByPlayerId(playerId).orElse(null);
+        Progress progress = progressRepository.findByPlayer(player).orElse(null);
         if (progress == null) {
             logger.warn("No progress found for player {}", playerId);
             return null;
@@ -534,5 +534,87 @@ public class NarrativeServiceImpl implements NarrativeService {
     public List<String> validateNarrative() {
         // Delegate to the NarrativeValidator
         return narrativeValidator.validateNarrative();
+    }
+
+    /**
+     * Update player progress based on a duel result.
+     *
+     * @param playerId the player ID
+     * @param npcId the NPC ID
+     * @param playerWon whether the player won the duel
+     * @return true if the progress was updated successfully, false otherwise
+     */
+    @Override
+    @Transactional
+    public boolean updateProgressFromDuel(Long playerId, Long npcId, Boolean playerWon) {
+        try {
+            Player player = playerRepository.findById(playerId).orElse(null);
+            if (player == null) {
+                logger.warn("Player not found: {}", playerId);
+                return false;
+            }
+
+            Progress progress = progressRepository.findByPlayer(player).orElse(null);
+            if (progress == null) {
+                logger.info("No progress found for player {}, creating new progress", playerId);
+                progress = new Progress();
+                progress.setPlayer(player);
+                progress.setCompletedChapters(new ArrayList<>());
+                progressRepository.save(progress);
+            }
+
+            // Update relationships based on duel outcome
+            Map<String, Integer> relationships = progress.getRelationships();
+            if (relationships == null) {
+                relationships = new HashMap<>();
+                progress.setRelationships(relationships);
+            }
+
+            // Update relationship with the NPC
+            String npcKey = npcId.toString();
+            int currentRelationship = relationships.getOrDefault(npcKey, 0);
+            int relationshipChange = playerWon ? 10 : -5; // Increase if won, decrease if lost
+            relationships.put(npcKey, Math.max(-100, Math.min(100, currentRelationship + relationshipChange)));
+
+            // Update player stats based on duel outcome
+            if (playerWon) {
+                // Increase experience
+                int expGain = 20; // Base experience gain for winning a duel
+                player.setExperience(player.getExperience() + expGain);
+
+                // Possibly increase a random stat
+                int statIncrease = 1;
+                int randomStat = (int) (Math.random() * 4); // 0-3 for the four main stats
+                switch (randomStat) {
+                    case 0:
+                        player.setStrength(player.getStrength() + statIncrease);
+                        break;
+                    case 1:
+                        player.setAgility(player.getAgility() + statIncrease);
+                        break;
+                    case 2:
+                        player.setIntelligence(player.getIntelligence() + statIncrease);
+                        break;
+                    case 3:
+                        player.setCharisma(player.getCharisma() + statIncrease);
+                        break;
+                }
+            } else {
+                // Small experience gain even for losing
+                int expGain = 5;
+                player.setExperience(player.getExperience() + expGain);
+            }
+
+            // Save changes
+            playerRepository.save(player);
+            progressRepository.save(progress);
+
+            logger.info("Updated progress for player {} after duel with NPC {}, player won: {}", 
+                    playerId, npcId, playerWon);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error updating progress from duel: {}", e.getMessage(), e);
+            return false;
+        }
     }
 }

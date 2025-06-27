@@ -2,10 +2,14 @@ package io.github.disparter.tokugawa.discord.core.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -22,11 +26,14 @@ public class AssetServiceImpl implements AssetService {
 
     private static final Logger logger = LoggerFactory.getLogger(AssetServiceImpl.class);
 
-    @Value("${assets.base.path:assets}")
+    @Value("${assets.base.path:classpath:assets}")
     private String assetsBasePath;
 
     @Value("${assets.base.url:}")
     private String assetsBaseUrl;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
 
     // Maps for different asset types
     private final Map<String, String> backgroundImages = new HashMap<>();
@@ -55,13 +62,13 @@ public class AssetServiceImpl implements AssetService {
             }
 
             // Load background images
-            loadAssetsOfType("backgrounds", backgroundImages, ".jpg");
+            loadAssetsOfType("backgrounds", backgroundImages, ".png");
 
             // Load character images
             loadAssetsOfType("characters", characterImages, ".png");
 
             // Load location images
-            loadAssetsOfType("locations", locationImages, ".jpg");
+            loadAssetsOfType("locations", locationImages, ".png");
 
             logger.info("Loaded {} background images, {} character images, and {} location images",
                     backgroundImages.size(), characterImages.size(), locationImages.size());
@@ -104,11 +111,11 @@ public class AssetServiceImpl implements AssetService {
      * Initialize the fallback images for different asset types.
      */
     private void initializeFallbackImages() {
-        fallbackImages.put("background", "backgrounds/default_background.jpg");
+        fallbackImages.put("background", "backgrounds/default_background.png");
         fallbackImages.put("character", "characters/default_character.png");
-        fallbackImages.put("location", "locations/default_location.jpg");
+        fallbackImages.put("location", "locations/default_location.png");
         fallbackImages.put("item", "items/default_item.png");
-        fallbackImages.put("event", "events/default_event.jpg");
+        fallbackImages.put("event", "events/default_event.png");
         fallbackImages.put("club", "clubs/default_club.png");
         fallbackImages.put("default", "default.png");
 
@@ -249,11 +256,15 @@ public class AssetServiceImpl implements AssetService {
         try {
             // Try to find the background image for the location
             String imagePath = backgroundImages.getOrDefault(location, 
-                    "backgrounds/" + location + ".jpg");
+                    "backgrounds/" + location + ".png");
 
-            Path path = Paths.get(assetsBasePath, imagePath);
-            if (Files.exists(path)) {
-                return createUrl(imagePath);
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + imagePath);
+                if (resource.exists()) {
+                    return createUrl(imagePath);
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", imagePath);
             }
 
             // If no image is found, return the fallback background image
@@ -299,11 +310,15 @@ public class AssetServiceImpl implements AssetService {
         try {
             // Try to find the location image
             String imagePath = locationImages.getOrDefault(locationId, 
-                    "locations/" + locationId + ".jpg");
+                    "locations/" + locationId + ".png");
 
-            Path path = Paths.get(assetsBasePath, imagePath);
-            if (Files.exists(path)) {
-                return createUrl(imagePath);
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + imagePath);
+                if (resource.exists()) {
+                    return createUrl(imagePath);
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", imagePath);
             }
 
             // If no image is found, return the fallback location image
@@ -417,35 +432,60 @@ public class AssetServiceImpl implements AssetService {
 
         // Try to infer the type from the context naming pattern
         if (context.startsWith("background_") || context.contains("_background")) {
-            String path = "backgrounds/" + context + ".jpg";
-            if (Files.exists(Paths.get(assetsBasePath, path))) {
-                return path;
+            String path = "backgrounds/" + context + ".png";
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + path);
+                if (resource.exists()) {
+                    return path;
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", path);
             }
         } else if (context.startsWith("character_") || context.contains("_character")) {
             String path = "characters/" + context + ".png";
-            if (Files.exists(Paths.get(assetsBasePath, path))) {
-                return path;
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + path);
+                if (resource.exists()) {
+                    return path;
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", path);
             }
         } else if (context.startsWith("location_") || context.contains("_location")) {
-            String path = "locations/" + context + ".jpg";
-            if (Files.exists(Paths.get(assetsBasePath, path))) {
-                return path;
+            String path = "locations/" + context + ".png";
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + path);
+                if (resource.exists()) {
+                    return path;
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", path);
             }
         }
 
         // If we can't determine the type, try different paths
         String[] possiblePaths = {
-            "backgrounds/" + context + ".jpg",
+            "backgrounds/" + context + ".png",
             "characters/" + context + ".png",
-            "locations/" + context + ".jpg",
-            context + ".jpg",
+            "locations/" + context + ".png",
             context + ".png"
         };
 
         for (String path : possiblePaths) {
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + path);
+                if (resource.exists()) {
+                    logger.debug("Found image at path: {}", path);
+                    return path;
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", path);
+            }
+
+            // Fallback to file system check
             Path fullPath = Paths.get(assetsBasePath, path);
             if (Files.exists(fullPath)) {
-                logger.debug("Found image at path: {}", path);
+                logger.debug("Found image at path (file system): {}", path);
                 return path;
             }
         }
@@ -503,9 +543,14 @@ public class AssetServiceImpl implements AssetService {
             }
 
             // Try the path directly
-            String variantPath = "backgrounds/" + id + "_" + variant + ".jpg";
-            if (Files.exists(Paths.get(assetsBasePath, variantPath))) {
-                return variantPath;
+            String variantPath = "backgrounds/" + id + "_" + variant + ".png";
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + variantPath);
+                if (resource.exists()) {
+                    return variantPath;
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", variantPath);
             }
         }
 
@@ -515,9 +560,14 @@ public class AssetServiceImpl implements AssetService {
         }
 
         // Try the path directly
-        String path = "backgrounds/" + id + ".jpg";
-        if (Files.exists(Paths.get(assetsBasePath, path))) {
-            return path;
+        String path = "backgrounds/" + id + ".png";
+        try {
+            Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + path);
+            if (resource.exists()) {
+                return path;
+            }
+        } catch (Exception e) {
+            logger.debug("Resource not found in classpath: {}", path);
         }
 
         return null;
@@ -575,9 +625,14 @@ public class AssetServiceImpl implements AssetService {
             }
 
             // Try the path directly
-            String variantPath = "locations/" + id + "_" + variant + ".jpg";
-            if (Files.exists(Paths.get(assetsBasePath, variantPath))) {
-                return variantPath;
+            String variantPath = "locations/" + id + "_" + variant + ".png";
+            try {
+                Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + variantPath);
+                if (resource.exists()) {
+                    return variantPath;
+                }
+            } catch (Exception e) {
+                logger.debug("Resource not found in classpath: {}", variantPath);
             }
         }
 
@@ -587,9 +642,14 @@ public class AssetServiceImpl implements AssetService {
         }
 
         // Try the path directly
-        String path = "locations/" + id + ".jpg";
-        if (Files.exists(Paths.get(assetsBasePath, path))) {
-            return path;
+        String path = "locations/" + id + ".png";
+        try {
+            Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + path);
+            if (resource.exists()) {
+                return path;
+            }
+        } catch (Exception e) {
+            logger.debug("Resource not found in classpath: {}", path);
         }
 
         return null;
@@ -612,9 +672,32 @@ public class AssetServiceImpl implements AssetService {
             urlString += imagePath;
             return new URL(urlString);
         } else {
-            // Otherwise, create a file URL
-            Path path = Paths.get(assetsBasePath, imagePath);
-            return path.toUri().toURL();
+            try {
+                // Use ResourceLoader to load from classpath
+                String resourcePath = assetsBasePath;
+                if (resourcePath.startsWith("classpath:")) {
+                    resourcePath = resourcePath.substring("classpath:".length());
+                }
+                if (!resourcePath.endsWith("/")) {
+                    resourcePath += "/";
+                }
+                resourcePath += imagePath;
+
+                Resource resource = resourceLoader.getResource("classpath:" + resourcePath);
+                if (resource.exists()) {
+                    return resource.getURL();
+                } else {
+                    logger.warn("Resource not found: {}", resourcePath);
+                    // Fallback to file URL if resource not found
+                    Path path = Paths.get(assetsBasePath, imagePath);
+                    return path.toUri().toURL();
+                }
+            } catch (IOException e) {
+                logger.error("Error loading resource: {}", imagePath, e);
+                // Fallback to file URL
+                Path path = Paths.get(assetsBasePath, imagePath);
+                return path.toUri().toURL();
+            }
         }
     }
 }

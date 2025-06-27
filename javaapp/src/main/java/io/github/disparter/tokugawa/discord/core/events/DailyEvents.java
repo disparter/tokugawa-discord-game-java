@@ -54,7 +54,7 @@ public class DailyEvents extends BaseEvent {
                 "Artes",
                 "Educação Física"
         );
-        
+
         // Randomly select 3 subjects
         List<String> selectedSubjects = new ArrayList<>(subjects);
         Collections.shuffle(selectedSubjects);
@@ -72,7 +72,7 @@ public class DailyEvents extends BaseEvent {
         for (String subject : subjects) {
             description.append("• ").append(subject).append("\n");
         }
-        
+
         return EmbedCreateSpec.builder()
                 .title("📚 Aulas do Dia")
                 .description(description.toString())
@@ -91,7 +91,7 @@ public class DailyEvents extends BaseEvent {
         for (String subject : subjects) {
             buttons.add(Button.primary("daily_" + subject, subject));
         }
-        
+
         return ActionRow.of(buttons);
     }
 
@@ -111,7 +111,7 @@ public class DailyEvents extends BaseEvent {
                         if (player == null) {
                             return Mono.error(new IllegalArgumentException("Player not found"));
                         }
-                        
+
                         // Update player progress
                         Map<String, Object> dailyProgress = player.getDailyProgress();
                         if (dailyProgress == null) {
@@ -119,20 +119,20 @@ public class DailyEvents extends BaseEvent {
                         }
                         dailyProgress.put(subject, true);
                         player.setDailyProgress(dailyProgress);
-                        
+
                         // Save player
                         playerService.save(player);
-                        
+
                         logger.info("Player {} participated in {} class", username, subject);
-                        return Mono.empty();
+                        return Mono.empty().then();
                     })
                     .onErrorResume(e -> {
                         logger.error("Error handling subject selection: {}", e.getMessage());
-                        return Mono.empty();
+                        return Mono.empty().then();
                     });
         } catch (Exception e) {
             logger.error("Error handling subject selection: {}", e.getMessage());
-            return Mono.empty();
+            return Mono.empty().then();
         }
     }
 
@@ -146,12 +146,12 @@ public class DailyEvents extends BaseEvent {
             List<String> subjects = selectSubjects();
             EmbedCreateSpec embed = createDailyEmbed(subjects);
             ActionRow buttons = createDailyButtons(subjects);
-            
+
             if (channelId == null) {
                 logger.error("No channel ID set for daily announcement");
                 return Mono.empty();
             }
-            
+
             return findChannel(channelId)
                     .flatMap(channel -> channel.createMessage(MessageCreateSpec.builder()
                             .addEmbed(embed)
@@ -188,7 +188,7 @@ public class DailyEvents extends BaseEvent {
             logger.error("No daily subjects selected");
             return Mono.empty();
         }
-        
+
         return sendAnnouncement(
                 "📚 Aulas do Dia",
                 "As aulas de hoje são: " + String.join(", ", subjects),

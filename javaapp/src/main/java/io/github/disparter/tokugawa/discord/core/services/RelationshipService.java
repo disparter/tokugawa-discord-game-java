@@ -137,4 +137,30 @@ public interface RelationshipService {
      * @return true if the event has been triggered, false otherwise
      */
     boolean hasTriggeredEvent(Long playerId, Long npcId, String eventId);
+
+    /**
+     * Increase relationship between a player and an NPC.
+     * This is an alias for improveRelationship.
+     *
+     * @param playerId the player ID
+     * @param npcId the NPC ID
+     * @param amount the amount to increase
+     * @return the updated relationship
+     */
+    default Relationship increaseRelationship(Long playerId, Long npcId, int amount) {
+        return improveRelationship(playerId, npcId, amount);
+    }
+
+    /**
+     * Decrease relationship between a player and an NPC.
+     * This is an alias for worsenRelationship.
+     *
+     * @param playerId the player ID
+     * @param npcId the NPC ID
+     * @param amount the amount to decrease
+     * @return the updated relationship
+     */
+    default Relationship decreaseRelationship(Long playerId, Long npcId, int amount) {
+        return worsenRelationship(playerId, npcId, amount);
+    }
 }
