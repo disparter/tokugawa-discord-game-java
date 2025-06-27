@@ -58,3 +58,4 @@ __pycache__/
 *.so
 .Python
 env/
+/javaapp/src/main/resources/assets/images/
