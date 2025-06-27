@@ -1,0 +1,82 @@
+{
+  "chapter_id": "3_1_final_year",
+  "type": "story",
+  "title": "O Último Ano",
+  "description": "O início do último ano na academia",
+  "phase": "year_3",
+  "requirements": {
+    "previous_chapter": "2_12_year_2_completion",
+    "flags": {
+      "year_2_completed": true
+    }
+  },
+  "scenes": [
+    {
+      "scene_id": "year_3_start",
+      "title": "Início do Último Ano",
+      "description": "O momento em que o último ano começa",
+      "background": "academy_entrance.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "center",
+          "expression": "determined",
+          "image": "player_determined.png"
+        },
+        {
+          "id": "headmaster",
+          "position": "right",
+          "expression": "proud",
+          "image": "headmaster_proud.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "headmaster",
+          "text": "Bem-vindo ao seu último ano na Academia Tokugawa. Este será o ano mais desafiador e importante de sua jornada.",
+          "expression": "proud"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Expressar determinação",
+          "next_scene": "determination_scene",
+          "effects": {
+            "confidence": 3,
+            "reputation": {
+              "headmaster": 5
+            }
+          }
+        },
+        {
+          "text": "Perguntar sobre os desafios",
+          "next_scene": "challenges_scene",
+          "effects": {
+            "knowledge": 3,
+            "preparation": 2
+          }
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "experience": 300,
+    "skills": {
+      "leadership": 2,
+      "responsibility": 1
+    },
+    "items": ["year_3_badge", "final_year_guide"],
+    "unlocks": ["year_3_events", "graduation_preparation"]
+  },
+  "next_chapter": "3_2_final_challenges",
+  "flags": {
+    "year_3_started": true,
+    "final_year_begun": true
+  },
+  "metadata": {
+    "location": "academy_entrance",
+    "time_of_day": "morning",
+    "weather": "clear",
+    "season": "spring"
+  }
+} 

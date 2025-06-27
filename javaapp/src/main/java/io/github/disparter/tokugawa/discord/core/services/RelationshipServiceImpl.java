@@ -255,6 +255,7 @@ public class RelationshipServiceImpl implements RelationshipService {
     public String triggerRomanceEvent(Long playerId, Long npcId) {
         Relationship relationship = getRelationship(playerId, npcId);
         RelationshipStatus status = relationship.getStatus();
+        int affinity = relationship.getAffinity();
 
         // Check if there are events for this status
         if (!ROMANCE_EVENTS.containsKey(status)) {
@@ -273,11 +274,73 @@ public class RelationshipServiceImpl implements RelationshipService {
             return null;
         }
 
-        // Trigger the first available event
-        String eventId = availableEvents.get(0);
-        recordTriggeredEvent(playerId, npcId, eventId);
+        // Check if the player meets the affinity requirements for the event
+        // Different events may have different affinity requirements
+        String eventId = null;
+
+        // For CRUSH events, require at least CRUSH_THRESHOLD + 5
+        if (status == RelationshipStatus.CRUSH) {
+            if (affinity >= CRUSH_THRESHOLD + 5) {
+                eventId = availableEvents.get(0);
+            }
+        }
+        // For DATING events, require at least DATING_THRESHOLD + 5
+        else if (status == RelationshipStatus.DATING) {
+            if (affinity >= DATING_THRESHOLD + 5) {
+                eventId = availableEvents.get(0);
+            }
+        }
+        // For COMMITTED events, require at least COMMITTED_THRESHOLD + 5
+        else if (status == RelationshipStatus.COMMITTED) {
+            if (affinity >= COMMITTED_THRESHOLD + 5) {
+                eventId = availableEvents.get(0);
+            }
+        }
+        // For other statuses, just check if affinity is at least at the minimum threshold for that status
+        else {
+            int minThreshold = getMinThresholdForStatus(status);
+            if (affinity >= minThreshold) {
+                eventId = availableEvents.get(0);
+            }
+        }
+
+        // If an event was selected, record it
+        if (eventId != null) {
+            recordTriggeredEvent(playerId, npcId, eventId);
+        }
 
         return eventId;
+    }
+
+    /**
+     * Gets the minimum affinity threshold for a relationship status.
+     *
+     * @param status the relationship status
+     * @return the minimum affinity threshold
+     */
+    private int getMinThresholdForStatus(RelationshipStatus status) {
+        switch (status) {
+            case ACQUAINTANCE:
+                return ACQUAINTANCE_THRESHOLD;
+            case FRIEND:
+                return FRIEND_THRESHOLD;
+            case CLOSE_FRIEND:
+                return CLOSE_FRIEND_THRESHOLD;
+            case BEST_FRIEND:
+                return BEST_FRIEND_THRESHOLD;
+            case CRUSH:
+                return CRUSH_THRESHOLD;
+            case DATING:
+                return DATING_THRESHOLD;
+            case COMMITTED:
+                return COMMITTED_THRESHOLD;
+            case RIVAL:
+                return RIVAL_THRESHOLD;
+            case ENEMY:
+                return ENEMY_THRESHOLD;
+            default:
+                return 0;
+        }
     }
 
     @Override

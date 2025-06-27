@@ -21,7 +21,7 @@ import java.util.Map;
 public class NarrativeValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(NarrativeValidator.class);
-    
+
     private final ChapterLoader chapterLoader;
     private final ObjectMapper objectMapper;
 
@@ -40,26 +40,26 @@ public class NarrativeValidator {
     public List<String> validateNarrative() {
         List<String> errors = new ArrayList<>();
         Map<String, Chapter> allChapters = chapterLoader.getAllChapters();
-        
+
         if (allChapters.isEmpty()) {
             errors.add("No chapters found. Make sure chapters are loaded before validation.");
             return errors;
         }
-        
+
         // Check for missing next chapters
         for (Chapter chapter : allChapters.values()) {
             validateChapter(chapter, allChapters, errors);
         }
-        
+
         // Check for unreachable chapters
         List<String> unreachableChapters = findUnreachableChapters(allChapters);
         for (String chapterId : unreachableChapters) {
             errors.add(String.format("Chapter %s is unreachable from any other chapter", chapterId));
         }
-        
+
         return errors;
     }
-    
+
     /**
      * Validate a single chapter.
      *
@@ -69,14 +69,14 @@ public class NarrativeValidator {
      */
     private void validateChapter(Chapter chapter, Map<String, Chapter> allChapters, List<String> errors) {
         String chapterId = chapter.getChapterId();
-        
+
         // Check for missing next chapter
         String nextChapterId = chapter.getNextChapterId();
         if (nextChapterId != null && !nextChapterId.isEmpty() && !allChapters.containsKey(nextChapterId)) {
             errors.add(String.format("Chapter %s references non-existent next chapter %s", 
                     chapterId, nextChapterId));
         }
-        
+
         // Check choices for next chapter references
         List<String> choices = chapter.getChoices();
         if (choices != null) {
@@ -86,7 +86,7 @@ public class NarrativeValidator {
                     // If the choice is a JSON string, parse it
                     if (choice.startsWith("{")) {
                         Map<String, Object> choiceData = objectMapper.readValue(choice, Map.class);
-                        
+
                         // Check for next chapter reference
                         if (choiceData.containsKey("next_chapter")) {
                             String choiceNextChapterId = (String) choiceData.get("next_chapter");
@@ -95,16 +95,41 @@ public class NarrativeValidator {
                                         i, chapterId, choiceNextChapterId));
                             }
                         }
-                        
+
                         // Check for next dialogue reference
                         if (choiceData.containsKey("next_dialogue")) {
                             Object nextDialogue = choiceData.get("next_dialogue");
                             if (!(nextDialogue instanceof Number)) {
                                 errors.add(String.format("Choice %d in chapter %s has invalid next_dialogue value: %s", 
                                         i, chapterId, nextDialogue));
+                            } else {
+                                // Check if the dialogue exists in the chapter
+                                int dialogueIndex = ((Number) nextDialogue).intValue();
+                                List<String> dialogues = chapter.getDialogues();
+                                if (dialogues == null || dialogueIndex < 0 || dialogueIndex >= dialogues.size()) {
+                                    errors.add(String.format("Choice %d in chapter %s references non-existent dialogue index %d", 
+                                            i, chapterId, dialogueIndex));
+                                }
                             }
                         }
-                        
+
+                        // Check for conditional next chapter
+                        if (choiceData.containsKey("conditional_next_chapter")) {
+                            Object conditionalNextChapter = choiceData.get("conditional_next_chapter");
+                            if (conditionalNextChapter instanceof Map) {
+                                Map<String, Object> conditions = (Map<String, Object>) conditionalNextChapter;
+                                for (Map.Entry<String, Object> entry : conditions.entrySet()) {
+                                    if (entry.getValue() instanceof String) {
+                                        String conditionNextChapterId = (String) entry.getValue();
+                                        if (!conditionNextChapterId.isEmpty() && !allChapters.containsKey(conditionNextChapterId)) {
+                                            errors.add(String.format("Choice %d in chapter %s has conditional next chapter that references non-existent chapter %s", 
+                                                    i, chapterId, conditionNextChapterId));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         // Check for effects
                         if (choiceData.containsKey("effects")) {
                             Object effects = choiceData.get("effects");
@@ -120,21 +145,77 @@ public class NarrativeValidator {
                 }
             }
         }
-        
+
+        // Check dialogues for choices that lead to invalid chapters or dialogues
+        List<String> dialogues = chapter.getDialogues();
+        if (dialogues != null) {
+            for (int i = 0; i < dialogues.size(); i++) {
+                String dialogue = dialogues.get(i);
+                try {
+                    // If the dialogue is a JSON string, parse it
+                    if (dialogue.startsWith("{")) {
+                        Map<String, Object> dialogueData = objectMapper.readValue(dialogue, Map.class);
+
+                        // Check dialogue choices
+                        if (dialogueData.containsKey("choices")) {
+                            Object choicesObj = dialogueData.get("choices");
+                            if (choicesObj instanceof List) {
+                                List<Object> dialogueChoices = (List<Object>) choicesObj;
+                                for (int j = 0; j < dialogueChoices.size(); j++) {
+                                    Object choiceObj = dialogueChoices.get(j);
+                                    if (choiceObj instanceof Map) {
+                                        Map<String, Object> dialogueChoice = (Map<String, Object>) choiceObj;
+
+                                        // Check for next chapter reference
+                                        if (dialogueChoice.containsKey("next_chapter")) {
+                                            String dialogueNextChapterId = (String) dialogueChoice.get("next_chapter");
+                                            if (!allChapters.containsKey(dialogueNextChapterId)) {
+                                                errors.add(String.format("Dialogue %d choice %d in chapter %s references non-existent next chapter %s", 
+                                                        i, j, chapterId, dialogueNextChapterId));
+                                            }
+                                        }
+
+                                        // Check for next dialogue reference
+                                        if (dialogueChoice.containsKey("next_dialogue")) {
+                                            Object nextDialogue = dialogueChoice.get("next_dialogue");
+                                            if (!(nextDialogue instanceof Number)) {
+                                                errors.add(String.format("Dialogue %d choice %d in chapter %s has invalid next_dialogue value: %s", 
+                                                        i, j, chapterId, nextDialogue));
+                                            } else {
+                                                // Check if the dialogue exists in the chapter
+                                                int dialogueIndex = ((Number) nextDialogue).intValue();
+                                                if (dialogueIndex < 0 || dialogueIndex >= dialogues.size()) {
+                                                    errors.add(String.format("Dialogue %d choice %d in chapter %s references non-existent dialogue index %d", 
+                                                            i, j, chapterId, dialogueIndex));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (JsonProcessingException e) {
+                    errors.add(String.format("Error parsing dialogue %d JSON in chapter %s: %s", 
+                            i, chapterId, e.getMessage()));
+                }
+            }
+        }
+
         // Check for required fields
         if (chapter.getTitle() == null || chapter.getTitle().isEmpty()) {
             errors.add(String.format("Chapter %s is missing a title", chapterId));
         }
-        
+
         if (chapter.getDescription() == null || chapter.getDescription().isEmpty()) {
             errors.add(String.format("Chapter %s is missing a description", chapterId));
         }
-        
+
         if (chapter.getType() == null) {
             errors.add(String.format("Chapter %s is missing a type", chapterId));
         }
     }
-    
+
     /**
      * Find chapters that are unreachable from any other chapter.
      *
@@ -147,7 +228,7 @@ public class NarrativeValidator {
         for (String chapterId : allChapters.keySet()) {
             isReferenced.put(chapterId, false);
         }
-        
+
         // Mark chapters that are referenced by others
         for (Chapter chapter : allChapters.values()) {
             // Check direct next chapter reference
@@ -155,7 +236,7 @@ public class NarrativeValidator {
             if (nextChapterId != null && !nextChapterId.isEmpty()) {
                 isReferenced.put(nextChapterId, true);
             }
-            
+
             // Check choices for next chapter references
             List<String> choices = chapter.getChoices();
             if (choices != null) {
@@ -175,7 +256,7 @@ public class NarrativeValidator {
                 }
             }
         }
-        
+
         // Find chapters that are not referenced
         List<String> unreachableChapters = new ArrayList<>();
         for (Map.Entry<String, Boolean> entry : isReferenced.entrySet()) {
@@ -186,10 +267,10 @@ public class NarrativeValidator {
                 }
             }
         }
-        
+
         return unreachableChapters;
     }
-    
+
     /**
      * Validate a specific chapter.
      *
@@ -199,13 +280,13 @@ public class NarrativeValidator {
     public List<String> validateChapter(String chapterId) {
         List<String> errors = new ArrayList<>();
         Map<String, Chapter> allChapters = chapterLoader.getAllChapters();
-        
+
         Chapter chapter = allChapters.get(chapterId);
         if (chapter == null) {
             errors.add(String.format("Chapter %s not found", chapterId));
             return errors;
         }
-        
+
         validateChapter(chapter, allChapters, errors);
         return errors;
     }
