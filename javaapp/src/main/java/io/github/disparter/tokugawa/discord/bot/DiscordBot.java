@@ -4,6 +4,9 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.SlashCommandInteractionEvent;
 import io.github.disparter.tokugawa.discord.bot.listeners.SlashCommandListener;
+import io.github.disparter.tokugawa.discord.core.events.EventsManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -17,14 +20,18 @@ import javax.annotation.PreDestroy;
 @Component
 public class DiscordBot {
 
+    private final Logger logger = LoggerFactory.getLogger(DiscordBot.class);
+
     @Value("${discord.token}")
     private String token;
 
     private GatewayDiscordClient gatewayClient;
     private final SlashCommandListener slashCommandListener;
+    private final EventsManager eventsManager;
 
-    public DiscordBot(SlashCommandListener slashCommandListener) {
+    public DiscordBot(SlashCommandListener slashCommandListener, EventsManager eventsManager) {
         this.slashCommandListener = slashCommandListener;
+        this.eventsManager = eventsManager;
     }
 
     /**
@@ -33,18 +40,22 @@ public class DiscordBot {
      */
     @PostConstruct
     public void init() {
-        DiscordClient client = DiscordClient.create(token);
-        
-        gatewayClient = client.login().block();
-        
-        if (gatewayClient != null) {
-            // Register the slash command listener
-            gatewayClient.on(SlashCommandInteractionEvent.class, slashCommandListener::handle)
-                    .subscribe();
-            
-            System.out.println("Discord bot connected successfully!");
-        } else {
-            System.err.println("Failed to connect to Discord. Check your token.");
+        try {
+            DiscordClient client = DiscordClient.create(token);
+
+            gatewayClient = client.login().block();
+
+            if (gatewayClient != null) {
+                // Register the slash command listener
+                gatewayClient.on(SlashCommandInteractionEvent.class, slashCommandListener::handle)
+                        .subscribe();
+
+                logger.info("Discord bot connected successfully!");
+            } else {
+                logger.error("Failed to connect to Discord. Check your token.");
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing Discord bot: {}", e.getMessage(), e);
         }
     }
 
@@ -53,9 +64,13 @@ public class DiscordBot {
      */
     @PreDestroy
     public void destroy() {
-        if (gatewayClient != null) {
-            gatewayClient.logout().block();
-            System.out.println("Discord bot disconnected.");
+        try {
+            if (gatewayClient != null) {
+                gatewayClient.logout().block();
+                logger.info("Discord bot disconnected.");
+            }
+        } catch (Exception e) {
+            logger.error("Error disconnecting Discord bot: {}", e.getMessage(), e);
         }
     }
 

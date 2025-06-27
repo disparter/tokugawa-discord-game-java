@@ -59,3 +59,8 @@ __pycache__/
 .Python
 env/
 /javaapp/src/main/resources/assets/images/
+/javaapp/scripts/
+# Environment files
+**/.env
+/javaapp/.env
+/untitled/.env

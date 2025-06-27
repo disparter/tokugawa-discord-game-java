@@ -35,6 +35,48 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+// Task to check if PostgreSQL is running
+task checkPostgresRunning {
+    doLast {
+        def isRunning = false
+        try {
+            def process = "scripts/start_postgres.sh".execute()
+            process.waitFor()
+            isRunning = (process.exitValue() == 0)
+        } catch (Exception e) {
+            println "Error checking PostgreSQL status: ${e.message}"
+            isRunning = false
+        }
+
+        if (!isRunning) {
+            println "ERROR: PostgreSQL is not running. Please start PostgreSQL using scripts/start_postgres.sh"
+            // Fail the build
+            throw new RuntimeException("PostgreSQL is not running")
+        } else {
+            println "PostgreSQL is running."
+        }
+    }
+}
+
+// Task to export environment variables
+task exportEnvironmentVariables {
+    doLast {
+        def exportProcess = "scripts/export_env.sh".execute()
+        exportProcess.waitFor()
+
+        if (exportProcess.exitValue() != 0) {
+            println "ERROR: Failed to export environment variables. Check scripts/export_env.sh"
+            // Fail the build
+            throw new RuntimeException("Failed to export environment variables")
+        } else {
+            println "Environment variables exported successfully."
+        }
+    }
+}
+
+// Make bootJar depend on checkPostgresRunning and exportEnvironmentVariables
+bootJar.dependsOn checkPostgresRunning, exportEnvironmentVariables
+
 tasks.named('test') {
     useJUnitPlatform()
 }
