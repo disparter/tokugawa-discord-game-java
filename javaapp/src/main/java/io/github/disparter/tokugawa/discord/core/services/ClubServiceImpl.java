@@ -36,8 +36,7 @@ public class ClubServiceImpl implements ClubService {
 
     @Override
     public Club findById(Long id) {
-        return clubRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Club not found with ID: " + id));
+        return clubRepository.findById(id).orElse(null);
     }
 
     @Override

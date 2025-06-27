@@ -50,8 +50,7 @@ public class PlayerServiceImpl implements PlayerService {
 
     @Override
     public Player findById(Long id) {
-        return playerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + id));
+        return playerRepository.findById(id).orElse(null);
     }
 
     @Override

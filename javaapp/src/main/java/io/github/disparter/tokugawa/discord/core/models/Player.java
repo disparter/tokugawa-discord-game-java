@@ -96,7 +96,7 @@ public class Player {
     @CollectionTable(name = "player_daily_progress", joinColumns = @JoinColumn(name = "player_id"))
     @MapKeyColumn(name = "progress_key")
     @Column(name = "progress_value")
-    private Map<String, Object> dailyProgress = new HashMap<>();
+    private Map<String, String> dailyProgress = new HashMap<>();
 
     /**
      * Gets the username of the player.

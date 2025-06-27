@@ -89,23 +89,29 @@ public class ChapterLoader {
                          String filename = path.getFileName().toString();
                          String chapterId = prefix + filename.replace(".json", "");
 
-                         // Read the JSON file
-                         Map<String, Object> chapterData = objectMapper.readValue(path.toFile(), Map.class);
+                         try {
+                             // Read the JSON file
+                             Map<String, Object> chapterData = objectMapper.readValue(path.toFile(), Map.class);
 
-                         // Add chapter ID to the data
-                         chapterData.put("chapter_id", chapterId);
+                             // Add chapter ID to the data
+                             chapterData.put("chapter_id", chapterId);
 
-                         // Create chapter from data
-                         Chapter chapter = createChapter(chapterData);
+                             // Create chapter from data
+                             Chapter chapter = createChapter(chapterData);
 
-                         if (chapter != null) {
-                             chapters.put(chapterId, chapter);
-                             log.info("Loaded chapter: {}", chapterId);
-                         } else {
-                             log.error("Failed to create chapter {}", chapterId);
+                             if (chapter != null) {
+                                 chapters.put(chapterId, chapter);
+                                 log.info("Loaded chapter: {}", chapterId);
+                             } else {
+                                 log.error("Failed to create chapter {}", chapterId);
+                             }
+                         } catch (Exception e) {
+                             // Log the error but continue processing other files
+                             log.error("Error loading chapter {}: {}", path.getFileName(), e.getMessage(), e);
                          }
-                     } catch (IOException e) {
-                         log.error("Error loading chapter {}: {}", path.getFileName(), e.getMessage(), e);
+                     } catch (Exception e) {
+                         // This catches any exceptions that might occur when getting the file name
+                         log.error("Error processing file: {}", e.getMessage(), e);
                      }
                  });
         } catch (IOException e) {
@@ -234,14 +240,17 @@ public class ChapterLoader {
      * Save all loaded chapters to the database.
      */
     private void saveChaptersToDatabase() {
-        for (Chapter chapter : chapters.values()) {
-            try {
-                chapterRepository.save(chapter);
-                log.info("Saved chapter to database: {}", chapter.getChapterId());
-            } catch (Exception e) {
-                log.error("Error saving chapter {} to database: {}", 
-                        chapter.getChapterId(), e.getMessage(), e);
+        try {
+            // Always call saveAll, even if the collection is empty
+            chapterRepository.saveAll(chapters.values());
+
+            if (!chapters.isEmpty()) {
+                log.info("Saved {} chapters to database", chapters.size());
+            } else {
+                log.warn("No chapters to save to database");
             }
+        } catch (Exception e) {
+            log.error("Error saving chapters to database: {}", e.getMessage(), e);
         }
     }
 

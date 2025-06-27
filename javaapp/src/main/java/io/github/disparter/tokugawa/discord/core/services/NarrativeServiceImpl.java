@@ -300,40 +300,23 @@ public class NarrativeServiceImpl implements NarrativeService {
         String choiceKey = currentChapterId + "_dialogue_" + currentDialogueIndex;
         storyChoices.put(choiceKey, String.valueOf(choiceIndex));
 
-        // Apply choice effects
+        // Register the choice and its consequences
+        String choiceText = choiceData.containsKey("text") ? (String) choiceData.get("text") : choice;
+        String decisionContext = "Chapter " + currentChapterId + ", Dialogue " + currentDialogueIndex;
+        String consequenceName = "Choice in " + chapter.getTitle();
+        String consequenceDescription = "You chose: " + choiceText;
+
+        List<String> effectsList = new ArrayList<>();
+
+        // Apply choice effects if they exist
         if (choiceData.containsKey("effects")) {
             Map<String, Object> effects = (Map<String, Object>) choiceData.get("effects");
             applyChoiceEffects(player, progress, effects);
 
-            // Register the choice and its consequences
-            String choiceText = choiceData.containsKey("text") ? (String) choiceData.get("text") : choice;
-            String decisionContext = "Chapter " + currentChapterId + ", Dialogue " + currentDialogueIndex;
-            String consequenceName = "Choice in " + chapter.getTitle();
-            String consequenceDescription = "You chose: " + choiceText;
-
             // Convert effects to a list of strings for the consequence
-            List<String> effectsList = new ArrayList<>();
             for (Map.Entry<String, Object> entry : effects.entrySet()) {
                 effectsList.add(entry.getKey() + ":" + entry.getValue());
             }
-
-            // Use ConsequenceService to track the decision
-            consequenceService.trackPlayerDecision(
-                playerId,
-                currentChapterId,
-                "scene_" + currentDialogueIndex,
-                choiceText,
-                decisionContext,
-                consequenceName,
-                consequenceDescription,
-                Consequence.ConsequenceType.IMMEDIATE,
-                effectsList,
-                List.of(choiceKey),
-                new ArrayList<>()
-            );
-
-            // Use PlayerService and ReputationService to apply effects
-            playerService.updatePlayerAttributes(player);
 
             // Update reputation if applicable
             if (effects.containsKey("faction_reputation")) {
@@ -345,6 +328,24 @@ public class NarrativeServiceImpl implements NarrativeService {
                 }
             }
         }
+
+        // Always update player attributes
+        playerService.updatePlayerAttributes(player);
+
+        // Use ConsequenceService to track the decision - always track even if no effects
+        consequenceService.trackPlayerDecision(
+            playerId,
+            currentChapterId,
+            "scene_" + currentDialogueIndex,
+            choiceText,
+            decisionContext,
+            consequenceName,
+            consequenceDescription,
+            Consequence.ConsequenceType.IMMEDIATE,
+            effectsList,
+            List.of(choiceKey),
+            new ArrayList<>()
+        );
 
         // Update dialogue index
         if (choiceData.containsKey("next_dialogue")) {

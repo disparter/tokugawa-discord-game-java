@@ -236,7 +236,6 @@ public class NarrativeServiceImplTest {
         when(progressRepository.findByPlayerId(1L)).thenReturn(Optional.of(testProgress));
         when(chapterRepository.findByChapterId("chapter_1")).thenReturn(Optional.of(testChapter));
         when(objectMapper.readValue(testChapter.getDialogues().get(0), Map.class)).thenReturn(dialogueData);
-        when(objectMapper.readValue("Option 1", Map.class)).thenReturn(choiceData);
 
         // Act
         Map<String, Object> result = narrativeService.processChoice(1L, 0);

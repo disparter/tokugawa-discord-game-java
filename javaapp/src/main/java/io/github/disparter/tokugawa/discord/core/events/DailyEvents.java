@@ -115,11 +115,11 @@ public class DailyEvents extends BaseEvent {
                         }
 
                         // Update player progress
-                        Map<String, Object> dailyProgress = player.getDailyProgress();
+                        Map<String, String> dailyProgress = player.getDailyProgress();
                         if (dailyProgress == null) {
                             dailyProgress = new HashMap<>();
                         }
-                        dailyProgress.put(subject, true);
+                        dailyProgress.put(subject, "true");
                         player.setDailyProgress(dailyProgress);
 
                         // Save player
