@@ -41,7 +41,7 @@ public class ClubServiceImplTest {
         Club club2 = new Club();
         club2.setId(2L);
         club2.setName("Another Club");
-        
+
         when(clubRepository.findAll()).thenReturn(Arrays.asList(testClub, club2));
 
         // Act
@@ -55,12 +55,12 @@ public class ClubServiceImplTest {
     }
 
     @Test
-    void findClubById_ShouldReturnClub_WhenClubExists() {
+    void findById_ShouldReturnClub_WhenClubExists() {
         // Arrange
         when(clubRepository.findById(1L)).thenReturn(Optional.of(testClub));
 
         // Act
-        Club result = clubService.findClubById(1L);
+        Club result = clubService.findById(1L);
 
         // Assert
         assertNotNull(result);
@@ -69,12 +69,12 @@ public class ClubServiceImplTest {
     }
 
     @Test
-    void findClubById_ShouldReturnNull_WhenClubDoesNotExist() {
+    void findById_ShouldReturnNull_WhenClubDoesNotExist() {
         // Arrange
         when(clubRepository.findById(2L)).thenReturn(Optional.empty());
 
         // Act
-        Club result = clubService.findClubById(2L);
+        Club result = clubService.findById(2L);
 
         // Assert
         assertNull(result);
@@ -96,15 +96,5 @@ public class ClubServiceImplTest {
         verify(clubRepository, times(1)).save(testClub);
     }
 
-    @Test
-    void delete_ShouldCallRepositoryDeleteById() {
-        // Arrange
-        doNothing().when(clubRepository).deleteById(1L);
-
-        // Act
-        clubService.delete(1L);
-
-        // Assert
-        verify(clubRepository, times(1)).deleteById(1L);
-    }
+    // The ClubService interface doesn't have a delete method, so we're removing this test
 }

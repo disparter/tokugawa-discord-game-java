@@ -1,7 +1,6 @@
 package io.github.disparter.tokugawa.discord.core.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -21,10 +20,9 @@ import java.util.Map;
 /**
  * Implementation of the AssetService interface.
  */
+@Slf4j
 @Service
 public class AssetServiceImpl implements AssetService {
-
-    private static final Logger logger = LoggerFactory.getLogger(AssetServiceImpl.class);
 
     @Value("${assets.base.path:classpath:assets}")
     private String assetsBasePath;
@@ -57,7 +55,7 @@ public class AssetServiceImpl implements AssetService {
         try {
             Path assetsPath = Paths.get(assetsBasePath);
             if (!Files.exists(assetsPath)) {
-                logger.warn("Assets directory does not exist: {}", assetsPath);
+                log.warn("Assets directory does not exist: {}", assetsPath);
                 return;
             }
 
@@ -70,10 +68,10 @@ public class AssetServiceImpl implements AssetService {
             // Load location images
             loadAssetsOfType("locations", locationImages, ".png");
 
-            logger.info("Loaded {} background images, {} character images, and {} location images",
+            log.info("Loaded {} background images, {} character images, and {} location images",
                     backgroundImages.size(), characterImages.size(), locationImages.size());
         } catch (Exception e) {
-            logger.error("Error loading assets", e);
+            log.error("Error loading assets", e);
         }
     }
 
@@ -89,7 +87,7 @@ public class AssetServiceImpl implements AssetService {
             Path directoryPath = Paths.get(assetsBasePath, directory);
             if (!Files.exists(directoryPath)) {
                 Files.createDirectories(directoryPath);
-                logger.info("Created directory: {}", directoryPath);
+                log.info("Created directory: {}", directoryPath);
                 return;
             }
 
@@ -100,10 +98,10 @@ public class AssetServiceImpl implements AssetService {
                     String assetId = fileName.substring(0, fileName.lastIndexOf('.'));
                     String relativePath = directory + "/" + fileName;
                     assetMap.put(assetId, relativePath);
-                    logger.debug("Loaded asset: {} -> {}", assetId, relativePath);
+                    log.debug("Loaded asset: {} -> {}", assetId, relativePath);
                 });
         } catch (Exception e) {
-            logger.error("Error loading assets from directory: {}", directory, e);
+            log.error("Error loading assets from directory: {}", directory, e);
         }
     }
 
@@ -134,7 +132,7 @@ public class AssetServiceImpl implements AssetService {
             Path assetsPath = Paths.get(assetsBasePath);
             if (!Files.exists(assetsPath)) {
                 Files.createDirectories(assetsPath);
-                logger.info("Created assets directory: {}", assetsPath);
+                log.info("Created assets directory: {}", assetsPath);
             }
 
             // Create directories for each asset type
@@ -143,11 +141,11 @@ public class AssetServiceImpl implements AssetService {
                 Path dirPath = Paths.get(assetsBasePath, dir);
                 if (!Files.exists(dirPath)) {
                     Files.createDirectories(dirPath);
-                    logger.info("Created directory: {}", dirPath);
+                    log.info("Created directory: {}", dirPath);
                 }
             }
         } catch (Exception e) {
-            logger.error("Error creating fallback directories", e);
+            log.error("Error creating fallback directories", e);
         }
     }
 
@@ -161,7 +159,7 @@ public class AssetServiceImpl implements AssetService {
             Path defaultPath = Paths.get(assetsBasePath, fallbackImages.get("default"));
             if (!Files.exists(defaultPath)) {
                 createEmptyImageFile(defaultPath);
-                logger.info("Created default fallback image: {}", defaultPath);
+                log.info("Created default fallback image: {}", defaultPath);
             }
 
             // Check and create type-specific fallback images
@@ -170,12 +168,12 @@ public class AssetServiceImpl implements AssetService {
                     Path path = Paths.get(assetsBasePath, entry.getValue());
                     if (!Files.exists(path)) {
                         createEmptyImageFile(path);
-                        logger.info("Created fallback image for {}: {}", entry.getKey(), path);
+                        log.info("Created fallback image for {}: {}", entry.getKey(), path);
                     }
                 }
             }
         } catch (Exception e) {
-            logger.error("Error creating fallback images", e);
+            log.error("Error creating fallback images", e);
         }
     }
 
@@ -193,7 +191,7 @@ public class AssetServiceImpl implements AssetService {
         // Create an empty file
         Files.createFile(path);
 
-        logger.debug("Created empty image file: {}", path);
+        log.debug("Created empty image file: {}", path);
     }
 
     @Override
@@ -210,11 +208,11 @@ public class AssetServiceImpl implements AssetService {
             // If no image is found, return the default fallback image
             return getFallbackImageUrl("default");
         } catch (Exception e) {
-            logger.error("Error getting image URL for context: {}", context, e);
+            log.error("Error getting image URL for context: {}", context, e);
             try {
                 return getFallbackImageUrl("default");
             } catch (Exception ex) {
-                logger.error("Error getting fallback image URL", ex);
+                log.error("Error getting fallback image URL", ex);
                 return null;
             }
         }
@@ -239,13 +237,13 @@ public class AssetServiceImpl implements AssetService {
             Path path = Paths.get(assetsBasePath, fallbackPath);
             return path.toFile();
         } catch (Exception e) {
-            logger.error("Error getting image file for context: {}", context, e);
+            log.error("Error getting image file for context: {}", context, e);
             try {
                 String fallbackPath = fallbackImages.get("default");
                 Path path = Paths.get(assetsBasePath, fallbackPath);
                 return path.toFile();
             } catch (Exception ex) {
-                logger.error("Error getting fallback image file", ex);
+                log.error("Error getting fallback image file", ex);
                 return null;
             }
         }
@@ -264,17 +262,17 @@ public class AssetServiceImpl implements AssetService {
                     return createUrl(imagePath);
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", imagePath);
+                log.debug("Resource not found in classpath: {}", imagePath);
             }
 
             // If no image is found, return the fallback background image
             return getFallbackImageUrl("background");
         } catch (Exception e) {
-            logger.error("Error getting background image URL for location: {}", location, e);
+            log.error("Error getting background image URL for location: {}", location, e);
             try {
                 return getFallbackImageUrl("background");
             } catch (Exception ex) {
-                logger.error("Error getting fallback background image URL", ex);
+                log.error("Error getting fallback background image URL", ex);
                 return null;
             }
         }
@@ -295,11 +293,11 @@ public class AssetServiceImpl implements AssetService {
             // If no image is found, return the fallback character image
             return getFallbackImageUrl("character");
         } catch (Exception e) {
-            logger.error("Error getting character image URL for character: {}", characterId, e);
+            log.error("Error getting character image URL for character: {}", characterId, e);
             try {
                 return getFallbackImageUrl("character");
             } catch (Exception ex) {
-                logger.error("Error getting fallback character image URL", ex);
+                log.error("Error getting fallback character image URL", ex);
                 return null;
             }
         }
@@ -318,17 +316,17 @@ public class AssetServiceImpl implements AssetService {
                     return createUrl(imagePath);
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", imagePath);
+                log.debug("Resource not found in classpath: {}", imagePath);
             }
 
             // If no image is found, return the fallback location image
             return getFallbackImageUrl("location");
         } catch (Exception e) {
-            logger.error("Error getting location image URL for location: {}", locationId, e);
+            log.error("Error getting location image URL for location: {}", locationId, e);
             try {
                 return getFallbackImageUrl("location");
             } catch (Exception ex) {
-                logger.error("Error getting fallback location image URL", ex);
+                log.error("Error getting fallback location image URL", ex);
                 return null;
             }
         }
@@ -356,9 +354,9 @@ public class AssetServiceImpl implements AssetService {
                 // If the specific fallback doesn't exist, try to create it
                 try {
                     createEmptyImageFile(path);
-                    logger.info("Created missing fallback image: {}", path);
+                    log.info("Created missing fallback image: {}", path);
                 } catch (Exception ex) {
-                    logger.warn("Could not create fallback image: {}", path, ex);
+                    log.warn("Could not create fallback image: {}", path, ex);
 
                     // If we can't create the specific fallback, use the default fallback
                     fallbackPath = fallbackImages.get("default");
@@ -368,9 +366,9 @@ public class AssetServiceImpl implements AssetService {
                     if (!Files.exists(path)) {
                         try {
                             createEmptyImageFile(path);
-                            logger.info("Created missing default fallback image: {}", path);
+                            log.info("Created missing default fallback image: {}", path);
                         } catch (Exception e2) {
-                            logger.error("Could not create default fallback image: {}", path, e2);
+                            log.error("Could not create default fallback image: {}", path, e2);
                             // At this point, we've tried everything, so we'll return a hardcoded URL
                             return new URL("file:" + assetsBasePath + "/default.png");
                         }
@@ -380,12 +378,12 @@ public class AssetServiceImpl implements AssetService {
 
             return createUrl(fallbackPath);
         } catch (Exception e) {
-            logger.error("Error getting fallback image URL for asset type: {}", assetType, e);
+            log.error("Error getting fallback image URL for asset type: {}", assetType, e);
             try {
                 // Last resort: return a hardcoded URL to the default image
                 return new URL("file:" + assetsBasePath + "/default.png");
             } catch (Exception ex) {
-                logger.error("Critical error: Could not create hardcoded fallback URL", ex);
+                log.error("Critical error: Could not create hardcoded fallback URL", ex);
                 // If all else fails, return null, but this should never happen
                 return null;
             }
@@ -400,11 +398,11 @@ public class AssetServiceImpl implements AssetService {
      */
     private String findImagePathByContext(String context) {
         if (context == null || context.isEmpty()) {
-            logger.warn("Empty context provided to findImagePathByContext");
+            log.warn("Empty context provided to findImagePathByContext");
             return null;
         }
 
-        logger.debug("Finding image path for context: {}", context);
+        log.debug("Finding image path for context: {}", context);
 
         // Check if the context contains multiple parts (e.g., "location:tokyo" or "character:hero:angry")
         if (context.contains(":")) {
@@ -414,19 +412,19 @@ public class AssetServiceImpl implements AssetService {
         // Check if the context is directly in one of our maps
         // Check if the context is a background
         if (backgroundImages.containsKey(context)) {
-            logger.debug("Found background image for context: {}", context);
+            log.debug("Found background image for context: {}", context);
             return backgroundImages.get(context);
         }
 
         // Check if the context is a character
         if (characterImages.containsKey(context)) {
-            logger.debug("Found character image for context: {}", context);
+            log.debug("Found character image for context: {}", context);
             return characterImages.get(context);
         }
 
         // Check if the context is a location
         if (locationImages.containsKey(context)) {
-            logger.debug("Found location image for context: {}", context);
+            log.debug("Found location image for context: {}", context);
             return locationImages.get(context);
         }
 
@@ -439,7 +437,7 @@ public class AssetServiceImpl implements AssetService {
                     return path;
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", path);
+                log.debug("Resource not found in classpath: {}", path);
             }
         } else if (context.startsWith("character_") || context.contains("_character")) {
             String path = "characters/" + context + ".png";
@@ -449,7 +447,7 @@ public class AssetServiceImpl implements AssetService {
                     return path;
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", path);
+                log.debug("Resource not found in classpath: {}", path);
             }
         } else if (context.startsWith("location_") || context.contains("_location")) {
             String path = "locations/" + context + ".png";
@@ -459,7 +457,7 @@ public class AssetServiceImpl implements AssetService {
                     return path;
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", path);
+                log.debug("Resource not found in classpath: {}", path);
             }
         }
 
@@ -475,22 +473,22 @@ public class AssetServiceImpl implements AssetService {
             try {
                 Resource resource = resourceLoader.getResource("classpath:" + assetsBasePath + "/" + path);
                 if (resource.exists()) {
-                    logger.debug("Found image at path: {}", path);
+                    log.debug("Found image at path: {}", path);
                     return path;
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", path);
+                log.debug("Resource not found in classpath: {}", path);
             }
 
             // Fallback to file system check
             Path fullPath = Paths.get(assetsBasePath, path);
             if (Files.exists(fullPath)) {
-                logger.debug("Found image at path (file system): {}", path);
+                log.debug("Found image at path (file system): {}", path);
                 return path;
             }
         }
 
-        logger.debug("No image found for context: {}", context);
+        log.debug("No image found for context: {}", context);
         return null;
     }
 
@@ -511,7 +509,7 @@ public class AssetServiceImpl implements AssetService {
         String id = parts[1];
         String variant = parts.length > 2 ? parts[2] : null;
 
-        logger.debug("Complex context - Type: {}, ID: {}, Variant: {}", type, id, variant);
+        log.debug("Complex context - Type: {}, ID: {}, Variant: {}", type, id, variant);
 
         // Handle different types
         switch (type) {
@@ -522,7 +520,7 @@ public class AssetServiceImpl implements AssetService {
             case "location":
                 return findLocationImage(id, variant);
             default:
-                logger.warn("Unknown asset type in context: {}", type);
+                log.warn("Unknown asset type in context: {}", type);
                 return null;
         }
     }
@@ -550,7 +548,7 @@ public class AssetServiceImpl implements AssetService {
                     return variantPath;
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", variantPath);
+                log.debug("Resource not found in classpath: {}", variantPath);
             }
         }
 
@@ -567,7 +565,7 @@ public class AssetServiceImpl implements AssetService {
                 return path;
             }
         } catch (Exception e) {
-            logger.debug("Resource not found in classpath: {}", path);
+            log.debug("Resource not found in classpath: {}", path);
         }
 
         return null;
@@ -632,7 +630,7 @@ public class AssetServiceImpl implements AssetService {
                     return variantPath;
                 }
             } catch (Exception e) {
-                logger.debug("Resource not found in classpath: {}", variantPath);
+                log.debug("Resource not found in classpath: {}", variantPath);
             }
         }
 
@@ -649,7 +647,7 @@ public class AssetServiceImpl implements AssetService {
                 return path;
             }
         } catch (Exception e) {
-            logger.debug("Resource not found in classpath: {}", path);
+            log.debug("Resource not found in classpath: {}", path);
         }
 
         return null;
@@ -687,13 +685,13 @@ public class AssetServiceImpl implements AssetService {
                 if (resource.exists()) {
                     return resource.getURL();
                 } else {
-                    logger.warn("Resource not found: {}", resourcePath);
+                    log.warn("Resource not found: {}", resourcePath);
                     // Fallback to file URL if resource not found
                     Path path = Paths.get(assetsBasePath, imagePath);
                     return path.toUri().toURL();
                 }
             } catch (IOException e) {
-                logger.error("Error loading resource: {}", imagePath, e);
+                log.error("Error loading resource: {}", imagePath, e);
                 // Fallback to file URL
                 Path path = Paths.get(assetsBasePath, imagePath);
                 return path.toUri().toURL();

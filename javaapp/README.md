@@ -44,11 +44,19 @@ A Spring Boot application for a Discord game bot using Discord4J.
    ```
    export DISCORD_TOKEN=your_token_here
    ```
-3. Build the application:
+3. Set up PostgreSQL for local development:
+   ```
+   # Install PostgreSQL if not already installed
+   ./scripts/install_postgres.sh
+
+   # Prepare PostgreSQL role and database
+   ./scripts/prepare_postgres_role.sh
+   ```
+4. Build the application:
    ```
    ./gradlew build
    ```
-4. Run the application:
+5. Run the application:
    ```
    ./gradlew bootRun
    ```
@@ -57,10 +65,19 @@ A Spring Boot application for a Discord game bot using Discord4J.
 
 ### Database
 
-The application uses H2 in-memory database for development. The H2 console is available at:
+The application uses PostgreSQL for local development and production. For local development:
+- Database: gamedb
+- Username: postgres
+- Password: postgres
+- Host: localhost
+- Port: 5432
+
+You can connect to the database using a PostgreSQL client like pgAdmin or psql:
 ```
-http://localhost:8080/h2-console
+psql -U postgres -d gamedb
 ```
+
+Note: The application was previously configured to use H2 in-memory database for development, but it now uses PostgreSQL for both local development and production.
 
 ### API Documentation
 

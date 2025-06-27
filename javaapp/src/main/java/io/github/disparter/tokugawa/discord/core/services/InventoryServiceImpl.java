@@ -1,12 +1,11 @@
 package io.github.disparter.tokugawa.discord.core.services;
 
+import lombok.extern.slf4j.Slf4j;
 import io.github.disparter.tokugawa.discord.core.models.Inventory;
 import io.github.disparter.tokugawa.discord.core.models.Item;
 import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.repositories.InventoryRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.PlayerRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +19,9 @@ import java.util.Optional;
  * Implementation of the InventoryService interface.
  */
 @Service
+@Slf4j
 public class InventoryServiceImpl implements InventoryService {
 
-    private static final Logger logger = LoggerFactory.getLogger(InventoryServiceImpl.class);
 
     private final InventoryRepository inventoryRepository;
     private final PlayerRepository playerRepository;
@@ -78,7 +77,7 @@ public class InventoryServiceImpl implements InventoryService {
         // Update the inventory
         inventory.setLastUpdated(LocalDateTime.now());
         
-        logger.info("Added {} x{} to player {}'s inventory", 
+        log.info("Added {} x{} to player {}'s inventory", 
                 item.getName(), quantity, player.getUsername());
         
         return inventoryRepository.save(inventory);
@@ -114,7 +113,7 @@ public class InventoryServiceImpl implements InventoryService {
         // Update the inventory
         inventory.setLastUpdated(LocalDateTime.now());
         
-        logger.info("Removed {} x{} from player {}'s inventory", 
+        log.info("Removed {} x{} from player {}'s inventory", 
                 item.getName(), quantity, player.getUsername());
         
         return inventoryRepository.save(inventory);
@@ -139,7 +138,7 @@ public class InventoryServiceImpl implements InventoryService {
         // Apply the item's effects to the player
         Player updatedPlayer = itemService.applyItemEffects(item, player);
         
-        logger.info("Player {} used item {}", player.getUsername(), item.getName());
+        log.info("Player {} used item {}", player.getUsername(), item.getName());
         
         return updatedPlayer;
     }
@@ -198,7 +197,7 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setCreatedAt(LocalDateTime.now());
         inventory.setLastUpdated(LocalDateTime.now());
         
-        logger.info("Created new inventory for player {}", player.getUsername());
+        log.info("Created new inventory for player {}", player.getUsername());
         
         return inventoryRepository.save(inventory);
     }

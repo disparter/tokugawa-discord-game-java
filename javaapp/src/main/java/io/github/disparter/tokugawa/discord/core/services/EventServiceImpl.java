@@ -1,5 +1,6 @@
 package io.github.disparter.tokugawa.discord.core.services;
 
+import lombok.extern.slf4j.Slf4j;
 import io.github.disparter.tokugawa.discord.core.models.Event;
 import io.github.disparter.tokugawa.discord.core.models.Event.EventType;
 import io.github.disparter.tokugawa.discord.core.models.GameCalendar.Season;
@@ -10,27 +11,21 @@ import io.github.disparter.tokugawa.discord.core.repositories.EventRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.NPCRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.PlayerRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.ProgressRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Implementation of the EventService interface.
  */
 @Service
+@Slf4j
 public class EventServiceImpl implements EventService {
 
-    private static final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
 
     private final EventRepository eventRepository;
     private final PlayerRepository playerRepository;
@@ -302,10 +297,10 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
 
         // Get player's progress
-        List<Progress> progressList = progressRepository.findByPlayerId(player.getId());
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
 
         for (Event event : allEvents) {
-            if (isEventTriggeredByStoryProgress(event, player, progressList)) {
+            if (isEventTriggeredByStoryProgress(event, player, progressOptional)) {
                 triggeredEvents.add(event);
             }
         }
@@ -318,10 +313,10 @@ public class EventServiceImpl implements EventService {
      *
      * @param event the event to check
      * @param player the player
-     * @param progressList the player's progress
+     * @param progressOptional the player's progress
      * @return true if the event is triggered by story progress, false otherwise
      */
-    private boolean isEventTriggeredByStoryProgress(Event event, Player player, List<Progress> progressList) {
+    private boolean isEventTriggeredByStoryProgress(Event event, Player player, Optional<Progress> progressOptional) {
         // Check if the event has trigger conditions
         if (event.getTriggerConditions() == null || event.getTriggerConditions().isEmpty()) {
             return false;
@@ -334,7 +329,7 @@ public class EventServiceImpl implements EventService {
                 String specificCondition = condition.substring(6);
 
                 // Check if the specific condition is met based on the player's progress
-                if (isStoryConditionMet(specificCondition, progressList)) {
+                if (isStoryConditionMet(specificCondition, progressOptional)) {
                     return true;
                 }
             }
@@ -347,10 +342,10 @@ public class EventServiceImpl implements EventService {
      * Checks if a story condition is met based on player's progress.
      *
      * @param specificCondition the specific condition to check
-     * @param progressList the player's progress
+     * @param progressOptional the player's progress
      * @return true if the condition is met, false otherwise
      */
-    private boolean isStoryConditionMet(String specificCondition, List<Progress> progressList) {
+    private boolean isStoryConditionMet(String specificCondition, Optional<Progress> progressOptional) {
         // Parse the condition (format: chapter=value)
         String[] parts = specificCondition.split("=");
         if (parts.length != 2) {
@@ -366,9 +361,9 @@ public class EventServiceImpl implements EventService {
         }
 
         // Check if the player has completed the specified chapter
-        for (Progress progress : progressList) {
-            if (progress.getChapterId() != null && progress.getChapterId().equals(expectedValue) && 
-                progress.isCompleted()) {
+        if (progressOptional.isPresent()) {
+            Progress progress = progressOptional.get();
+            if (progress.getCompletedChapters().contains(expectedValue)) {
                 return true;
             }
         }
@@ -411,7 +406,7 @@ public class EventServiceImpl implements EventService {
      */
     private boolean isClimacticEventAvailableForPlayer(Event event, Player player) {
         // Get player's progress
-        List<Progress> progressList = progressRepository.findByPlayerId(player.getId());
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
 
         // Check if the event has trigger conditions
         if (event.getTriggerConditions() == null || event.getTriggerConditions().isEmpty()) {
@@ -425,7 +420,7 @@ public class EventServiceImpl implements EventService {
                 String specificCondition = condition.substring(6);
 
                 // Check if the specific condition is met based on the player's progress
-                if (!isStoryConditionMet(specificCondition, progressList)) {
+                if (!isStoryConditionMet(specificCondition, progressOptional)) {
                     return false;
                 }
             }
@@ -485,14 +480,18 @@ public class EventServiceImpl implements EventService {
             return false;
         }
 
-        // Get player's choices from progress repository
-        List<String> playerChoices = progressRepository.findByPlayerId(player.getId())
-            .stream()
-            .map(progress -> progress.getChoiceId())
-            .collect(Collectors.toList());
+        // Get player's progress
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
+
+        if (!progressOptional.isPresent()) {
+            return false;
+        }
+
+        // Get player's choices from progress
+        Map<String, String> playerChoices = progressOptional.get().getChoices();
 
         // Check if player has made all required choices
-        return playerChoices.containsAll(event.getRequiredChoices());
+        return playerChoices.keySet().containsAll(event.getRequiredChoices());
     }
 
     /**
@@ -636,10 +635,10 @@ public class EventServiceImpl implements EventService {
             // Save the relationship
             relationshipService.save(relationship);
 
-            logger.info("Romance event {} triggered for player {} with NPC {}", eventId, player.getId(), npcId);
+            log.info("Romance event {} triggered for player {} with NPC {}", eventId, player.getId(), npcId);
 
         } catch (NumberFormatException e) {
-            logger.error("Error parsing NPC ID from romance event ID: {}", eventId, e);
+            log.error("Error parsing NPC ID from romance event ID: {}", eventId, e);
         }
     }
 
@@ -650,15 +649,23 @@ public class EventServiceImpl implements EventService {
      * @param player the player
      */
     private void recordSeasonalEvent(Event event, Player player) {
-        // Record the event in the player's progress
-        Progress progress = new Progress();
-        progress.setPlayerId(player.getId());
-        progress.setEventId(event.getEventId());
-        progress.setTimestamp(LocalDateTime.now());
+        // Get or create player's progress
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
+        Progress progress;
+
+        if (progressOptional.isPresent()) {
+            progress = progressOptional.get();
+        } else {
+            progress = new Progress();
+            progress.setPlayer(player);
+        }
+
+        // Record the event in the player's triggered events
+        progress.getTriggeredEvents().put(event.getEventId(), LocalDateTime.now().toString());
 
         progressRepository.save(progress);
 
-        logger.info("Seasonal event {} triggered for player {}", event.getEventId(), player.getId());
+        log.info("Seasonal event {} triggered for player {}", event.getEventId(), player.getId());
     }
 
     /**
@@ -668,15 +675,23 @@ public class EventServiceImpl implements EventService {
      * @param player the player
      */
     private void recordRandomEvent(Event event, Player player) {
-        // Record the event in the player's progress
-        Progress progress = new Progress();
-        progress.setPlayerId(player.getId());
-        progress.setEventId(event.getEventId());
-        progress.setTimestamp(LocalDateTime.now());
+        // Get or create player's progress
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
+        Progress progress;
+
+        if (progressOptional.isPresent()) {
+            progress = progressOptional.get();
+        } else {
+            progress = new Progress();
+            progress.setPlayer(player);
+        }
+
+        // Record the event in the player's triggered events
+        progress.getTriggeredEvents().put(event.getEventId(), LocalDateTime.now().toString());
 
         progressRepository.save(progress);
 
-        logger.info("Random event {} triggered for player {}", event.getEventId(), player.getId());
+        log.info("Random event {} triggered for player {}", event.getEventId(), player.getId());
     }
 
     /**
@@ -686,15 +701,23 @@ public class EventServiceImpl implements EventService {
      * @param player the player
      */
     private void recordChoiceTriggeredEvent(Event event, Player player) {
-        // Record the event in the player's progress
-        Progress progress = new Progress();
-        progress.setPlayerId(player.getId());
-        progress.setEventId(event.getEventId());
-        progress.setTimestamp(LocalDateTime.now());
+        // Get or create player's progress
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
+        Progress progress;
+
+        if (progressOptional.isPresent()) {
+            progress = progressOptional.get();
+        } else {
+            progress = new Progress();
+            progress.setPlayer(player);
+        }
+
+        // Record the event in the player's triggered events
+        progress.getTriggeredEvents().put(event.getEventId(), LocalDateTime.now().toString());
 
         progressRepository.save(progress);
 
-        logger.info("Choice-triggered event {} triggered for player {}", event.getEventId(), player.getId());
+        log.info("Choice-triggered event {} triggered for player {}", event.getEventId(), player.getId());
     }
 
     /**
@@ -704,15 +727,23 @@ public class EventServiceImpl implements EventService {
      * @param player the player
      */
     private void recordClimacticEvent(Event event, Player player) {
-        // Record the event in the player's progress
-        Progress progress = new Progress();
-        progress.setPlayerId(player.getId());
-        progress.setEventId(event.getEventId());
-        progress.setTimestamp(LocalDateTime.now());
+        // Get or create player's progress
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
+        Progress progress;
+
+        if (progressOptional.isPresent()) {
+            progress = progressOptional.get();
+        } else {
+            progress = new Progress();
+            progress.setPlayer(player);
+        }
+
+        // Record the event in the player's triggered events
+        progress.getTriggeredEvents().put(event.getEventId(), LocalDateTime.now().toString());
 
         progressRepository.save(progress);
 
-        logger.info("Climactic event {} triggered for player {}", event.getEventId(), player.getId());
+        log.info("Climactic event {} triggered for player {}", event.getEventId(), player.getId());
     }
 
     @Override
@@ -730,14 +761,17 @@ public class EventServiceImpl implements EventService {
         applyEventConsequences(eventId, playerId);
 
         // Mark the event as completed in the player's progress
-        Progress progress = progressRepository.findByPlayerIdAndEventId(player.getId(), event.getEventId());
-        if (progress != null) {
-            progress.setCompleted(true);
-            progress.setCompletionTimestamp(LocalDateTime.now());
+        Optional<Progress> progressOptional = progressRepository.findByPlayer(player);
+        if (progressOptional.isPresent()) {
+            Progress progress = progressOptional.get();
+            // Add the event to completed chapters
+            progress.getCompletedChapters().add(event.getEventId());
+            // Update the triggered events with completion timestamp
+            progress.getTriggeredEvents().put(event.getEventId() + "_completed", LocalDateTime.now().toString());
             progressRepository.save(progress);
         }
 
-        logger.info("Event {} completed for player {}", event.getEventId(), player.getId());
+        log.info("Event {} completed for player {}", event.getEventId(), player.getId());
 
         return event;
     }
@@ -773,7 +807,7 @@ public class EventServiceImpl implements EventService {
     private void applyReward(Player player, String reward) {
         String[] parts = reward.split(":");
         if (parts.length != 2) {
-            logger.warn("Invalid reward format: {}", reward);
+            log.warn("Invalid reward format: {}", reward);
             return;
         }
 
@@ -785,28 +819,28 @@ public class EventServiceImpl implements EventService {
                 case "exp":
                     int expValue = Integer.parseInt(valueStr);
                     player.setExp(player.getExp() + expValue);
-                    logger.info("Applied EXP reward of {} to player {}", expValue, player.getId());
+                    log.info("Applied EXP reward of {} to player {}", expValue, player.getId());
                     break;
                 case "tusd":
                     int tusdValue = Integer.parseInt(valueStr);
                     player.setPoints(player.getPoints() + tusdValue);
-                    logger.info("Applied TUSD reward of {} to player {}", tusdValue, player.getId());
+                    log.info("Applied TUSD reward of {} to player {}", tusdValue, player.getId());
                     break;
                 case "item":
                     // In a real implementation, this would add the item to the player's inventory
-                    logger.info("Applied item reward of {} to player {}", valueStr, player.getId());
+                    log.info("Applied item reward of {} to player {}", valueStr, player.getId());
                     break;
                 case "level":
                     int levelValue = Integer.parseInt(valueStr);
                     player.setLevel(player.getLevel() + levelValue);
-                    logger.info("Applied level reward of {} to player {}", levelValue, player.getId());
+                    log.info("Applied level reward of {} to player {}", levelValue, player.getId());
                     break;
                 default:
-                    logger.warn("Unknown reward type: {}", type);
+                    log.warn("Unknown reward type: {}", type);
                     break;
             }
         } catch (NumberFormatException e) {
-            logger.error("Error parsing reward value: {}", valueStr, e);
+            log.error("Error parsing reward value: {}", valueStr, e);
         }
     }
 

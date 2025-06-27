@@ -35,44 +35,9 @@ public class DecisionDashboardCommand implements SlashCommand {
         return "decisions";
     }
 
-    @Override
-    public String getDescription() {
-        return "View your decision dashboard";
-    }
 
     @Override
-    public List<ApplicationCommandOption> getOptions() {
-        return List.of(
-            ApplicationCommandOption.builder()
-                .name("view")
-                .description("View your decision dashboard")
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .build(),
-            ApplicationCommandOption.builder()
-                .name("enhanced")
-                .description("View your enhanced decision dashboard with community comparisons and reflections")
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .build(),
-            ApplicationCommandOption.builder()
-                .name("reflections")
-                .description("View ethical reflections on your decisions")
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .build(),
-            ApplicationCommandOption.builder()
-                .name("alternatives")
-                .description("View alternative paths you could have taken")
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .build(),
-            ApplicationCommandOption.builder()
-                .name("community")
-                .description("Compare your choices with the community")
-                .type(ApplicationCommandOption.Type.SUB_COMMAND.getValue())
-                .build()
-        );
-    }
-
-    @Override
-    public Mono<Void> handle(ChatInputInteractionEvent event) {
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
         // Get the Discord user ID
         String discordId = event.getInteraction().getUser().getId().asString();
 

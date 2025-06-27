@@ -9,8 +9,7 @@ import io.github.disparter.tokugawa.discord.core.models.Progress;
 import io.github.disparter.tokugawa.discord.core.repositories.ChapterRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.PlayerRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.ProgressRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +26,9 @@ import java.util.Optional;
  * choice processing, and narrative validation.
  */
 @Service
+@Slf4j
 public class NarrativeServiceImpl implements NarrativeService {
 
-    private static final Logger logger = LoggerFactory.getLogger(NarrativeServiceImpl.class);
 
     private final ChapterRepository chapterRepository;
     private final PlayerRepository playerRepository;
@@ -79,13 +78,13 @@ public class NarrativeServiceImpl implements NarrativeService {
         // Get player progress
         Player player = playerRepository.findById(playerId).orElse(null);
         if (player == null) {
-            logger.warn("Player not found: {}", playerId);
+            log.warn("Player not found: {}", playerId);
             return new ArrayList<>();
         }
 
         Progress progress = progressRepository.findByPlayer(player).orElse(null);
         if (progress == null) {
-            logger.info("No progress found for player {}, creating new progress", playerId);
+            log.info("No progress found for player {}, creating new progress", playerId);
             progress = new Progress();
             progress.setPlayer(player);
             progress.setCompletedChapters(new ArrayList<>());
@@ -117,13 +116,13 @@ public class NarrativeServiceImpl implements NarrativeService {
     public Chapter startChapter(Long chapterId, Long playerId) {
         Chapter chapter = findChapterById(chapterId);
         if (chapter == null) {
-            logger.warn("Chapter not found: {}", chapterId);
+            log.warn("Chapter not found: {}", chapterId);
             return null;
         }
 
         Player player = playerRepository.findById(playerId).orElse(null);
         if (player == null) {
-            logger.warn("Player not found: {}", playerId);
+            log.warn("Player not found: {}", playerId);
             return null;
         }
 
@@ -138,7 +137,7 @@ public class NarrativeServiceImpl implements NarrativeService {
         progress.setCurrentDialogueIndex(0);
         progressRepository.save(progress);
 
-        logger.info("Started chapter {} for player {}", chapter.getChapterId(), playerId);
+        log.info("Started chapter {} for player {}", chapter.getChapterId(), playerId);
         return chapter;
     }
 
@@ -147,19 +146,19 @@ public class NarrativeServiceImpl implements NarrativeService {
     public Chapter completeChapter(Long chapterId, Long playerId) {
         Chapter chapter = findChapterById(chapterId);
         if (chapter == null) {
-            logger.warn("Chapter not found: {}", chapterId);
+            log.warn("Chapter not found: {}", chapterId);
             return null;
         }
 
         Player player = playerRepository.findById(playerId).orElse(null);
         if (player == null) {
-            logger.warn("Player not found: {}", playerId);
+            log.warn("Player not found: {}", playerId);
             return null;
         }
 
         Progress progress = progressRepository.findByPlayer(player).orElse(null);
         if (progress == null) {
-            logger.warn("No progress found for player {}", playerId);
+            log.warn("No progress found for player {}", playerId);
             return null;
         }
 
@@ -187,7 +186,7 @@ public class NarrativeServiceImpl implements NarrativeService {
         playerRepository.save(player);
         progressRepository.save(progress);
 
-        logger.info("Completed chapter {} for player {}", chapter.getChapterId(), playerId);
+        log.info("Completed chapter {} for player {}", chapter.getChapterId(), playerId);
         return chapter;
     }
 
@@ -203,26 +202,26 @@ public class NarrativeServiceImpl implements NarrativeService {
     public Map<String, Object> processChoice(Long playerId, int choiceIndex) {
         Player player = playerRepository.findById(playerId).orElse(null);
         if (player == null) {
-            logger.warn("Player not found: {}", playerId);
+            log.warn("Player not found: {}", playerId);
             return createErrorResponse("Player not found");
         }
 
         Progress progress = progressRepository.findByPlayerId(playerId).orElse(null);
         if (progress == null) {
-            logger.warn("No progress found for player {}", playerId);
+            log.warn("No progress found for player {}", playerId);
             return createErrorResponse("No progress found for player");
         }
 
         String currentChapterId = progress.getCurrentChapterId();
         if (currentChapterId == null) {
-            logger.warn("No current chapter for player {}", playerId);
+            log.warn("No current chapter for player {}", playerId);
             return createErrorResponse("No current chapter");
         }
 
         // Get the current chapter
         Optional<Chapter> chapterOpt = chapterRepository.findByChapterId(currentChapterId);
         if (chapterOpt.isEmpty()) {
-            logger.warn("Current chapter not found: {}", currentChapterId);
+            log.warn("Current chapter not found: {}", currentChapterId);
             return createErrorResponse("Current chapter not found");
         }
 
@@ -255,7 +254,7 @@ public class NarrativeServiceImpl implements NarrativeService {
                     choices = chapter.getChoices();
                 }
             } catch (Exception e) {
-                logger.error("Error parsing dialogue JSON: {}", e.getMessage(), e);
+                log.error("Error parsing dialogue JSON: {}", e.getMessage(), e);
                 choices = chapter.getChoices();
             }
         } else {
@@ -264,12 +263,12 @@ public class NarrativeServiceImpl implements NarrativeService {
         }
 
         if (choices == null || choices.isEmpty()) {
-            logger.warn("No choices available for chapter {} at dialogue index {}", currentChapterId, currentDialogueIndex);
+            log.warn("No choices available for chapter {} at dialogue index {}", currentChapterId, currentDialogueIndex);
             return createErrorResponse("No choices available");
         }
 
         if (choiceIndex < 0 || choiceIndex >= choices.size()) {
-            logger.warn("Invalid choice index {} for chapter {}", choiceIndex, currentChapterId);
+            log.warn("Invalid choice index {} for chapter {}", choiceIndex, currentChapterId);
             return createErrorResponse("Invalid choice index");
         }
 
@@ -288,7 +287,7 @@ public class NarrativeServiceImpl implements NarrativeService {
                 choiceData.put("next_dialogue", currentDialogueIndex + 1);
             }
         } catch (JsonProcessingException e) {
-            logger.error("Error parsing choice JSON: {}", e.getMessage(), e);
+            log.error("Error parsing choice JSON: {}", e.getMessage(), e);
             return createErrorResponse("Error parsing choice data");
         }
 
@@ -378,7 +377,7 @@ public class NarrativeServiceImpl implements NarrativeService {
                             break;
                         }
                     } catch (Exception e) {
-                        logger.error("Error parsing scene JSON: {}", e.getMessage(), e);
+                        log.error("Error parsing scene JSON: {}", e.getMessage(), e);
                     }
                 }
             }
@@ -423,7 +422,7 @@ public class NarrativeServiceImpl implements NarrativeService {
             }
         }
 
-        logger.info("Processed choice {} for player {} in chapter {}", 
+        log.info("Processed choice {} for player {} in chapter {}", 
                 choiceIndex, playerId, currentChapterId);
         return response;
     }
@@ -457,7 +456,7 @@ public class NarrativeServiceImpl implements NarrativeService {
                         player.setAgility(player.getAgility() + change);
                         break;
                     default:
-                        logger.warn("Unknown attribute: {}", attribute);
+                        log.warn("Unknown attribute: {}", attribute);
                 }
             }
         }
@@ -550,13 +549,13 @@ public class NarrativeServiceImpl implements NarrativeService {
         try {
             Player player = playerRepository.findById(playerId).orElse(null);
             if (player == null) {
-                logger.warn("Player not found: {}", playerId);
+                log.warn("Player not found: {}", playerId);
                 return false;
             }
 
             Progress progress = progressRepository.findByPlayer(player).orElse(null);
             if (progress == null) {
-                logger.info("No progress found for player {}, creating new progress", playerId);
+                log.info("No progress found for player {}, creating new progress", playerId);
                 progress = new Progress();
                 progress.setPlayer(player);
                 progress.setCompletedChapters(new ArrayList<>());
@@ -609,11 +608,11 @@ public class NarrativeServiceImpl implements NarrativeService {
             playerRepository.save(player);
             progressRepository.save(progress);
 
-            logger.info("Updated progress for player {} after duel with NPC {}, player won: {}", 
+            log.info("Updated progress for player {} after duel with NPC {}, player won: {}", 
                     playerId, npcId, playerWon);
             return true;
         } catch (Exception e) {
-            logger.error("Error updating progress from duel: {}", e.getMessage(), e);
+            log.error("Error updating progress from duel: {}", e.getMessage(), e);
             return false;
         }
     }

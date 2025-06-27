@@ -1,13 +1,12 @@
 package io.github.disparter.tokugawa.discord.core.services;
 
+import lombok.extern.slf4j.Slf4j;
 import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.models.NPC;
 import io.github.disparter.tokugawa.discord.core.models.Technique;
 import io.github.disparter.tokugawa.discord.core.repositories.TechniqueRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.PlayerRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.NPCRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +22,9 @@ import java.util.Set;
  * Implementation of the TechniqueService interface.
  */
 @Service
+@Slf4j
 public class TechniqueServiceImpl implements TechniqueService {
 
-    private static final Logger logger = LoggerFactory.getLogger(TechniqueServiceImpl.class);
 
     private final TechniqueRepository techniqueRepository;
     private final PlayerRepository playerRepository;
@@ -102,7 +101,7 @@ public class TechniqueServiceImpl implements TechniqueService {
         // Save the technique and player
         techniqueRepository.save(technique);
 
-        logger.info("Taught technique {} to player {}", technique.getName(), player.getUsername());
+        log.info("Taught technique {} to player {}", technique.getName(), player.getUsername());
 
         return playerRepository.save(player);
     }
@@ -128,7 +127,7 @@ public class TechniqueServiceImpl implements TechniqueService {
         // Save the technique and NPC
         techniqueRepository.save(technique);
 
-        logger.info("Taught technique {} to NPC {}", technique.getName(), npc.getName());
+        log.info("Taught technique {} to NPC {}", technique.getName(), npc.getName());
 
         return npcRepository.save(npc);
     }
@@ -189,7 +188,7 @@ public class TechniqueServiceImpl implements TechniqueService {
         player.setPowerPoints(player.getPowerPoints() - powerPoints);
         playerRepository.save(player);
 
-        logger.info("Evolved technique {} for player {} with {} power points", 
+        log.info("Evolved technique {} for player {} with {} power points", 
                 technique.getName(), player.getUsername(), powerPoints);
 
         // Save and return the evolved technique

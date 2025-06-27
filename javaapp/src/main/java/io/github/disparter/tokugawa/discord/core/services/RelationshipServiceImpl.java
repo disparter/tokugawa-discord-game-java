@@ -81,12 +81,19 @@ public class RelationshipServiceImpl implements RelationshipService {
 
     @Override
     public List<Relationship> getRelationshipsForPlayer(Long playerId) {
-        return relationshipRepository.findByPlayerId(playerId);
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+        return relationshipRepository.findByPlayer(player);
     }
 
     @Override
     public Relationship getRelationship(Long playerId, Long npcId) {
-        return relationshipRepository.findByPlayerIdAndNpcId(playerId, npcId)
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+        NPC npc = npcRepository.findById(npcId)
+                .orElseThrow(() -> new IllegalArgumentException("NPC not found with ID: " + npcId));
+
+        return relationshipRepository.findByPlayerAndNpc(player, npc)
                 .orElseGet(() -> createNewRelationship(playerId, npcId));
     }
 

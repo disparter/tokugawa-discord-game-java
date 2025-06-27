@@ -88,7 +88,7 @@ public class ClubServiceImpl implements ClubService {
         }
 
         // Add player to club
-        player.setClub(club);
+        player.setClubId(club.getId().toString());
         playerRepository.save(player);
 
         // Refresh club to get updated members
@@ -108,7 +108,7 @@ public class ClubServiceImpl implements ClubService {
         }
 
         // Remove player from club
-        player.setClub(null);
+        player.setClubId(null);
         playerRepository.save(player);
 
         // Refresh club to get updated members

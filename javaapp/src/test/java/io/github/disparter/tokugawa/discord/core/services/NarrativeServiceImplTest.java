@@ -96,7 +96,7 @@ public class NarrativeServiceImplTest {
         // Set up test progress
         testProgress = new Progress();
         testProgress.setId(1L);
-        testProgress.setPlayerId(1L);
+        testProgress.setPlayer(testPlayer);
         testProgress.setCurrentChapterId("chapter_1");
         testProgress.setCurrentDialogueIndex(0);
         testProgress.setCompletedChapters(new ArrayList<>());

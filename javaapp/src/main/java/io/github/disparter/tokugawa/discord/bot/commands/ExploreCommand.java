@@ -163,8 +163,8 @@ public class ExploreCommand implements SlashCommand {
                 .append("**:\n\n");
 
         for (NPC npc : npcsAtLocation) {
-            response.append("- **").append(npc.getName()).append("** (").append(npc.getRole()).append(")\n")
-                   .append("  ").append(npc.getDescription()).append("\n\n");
+            response.append("- **").append(npc.getName()).append("** (").append(npc.getType()).append(")\n")
+                   .append("  ").append(npc.getBackground()).append("\n\n");
         }
 
         return event.reply()

@@ -1,10 +1,9 @@
 package io.github.disparter.tokugawa.discord.core.migration;
 
+import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.disparter.tokugawa.discord.core.repositories.ChapterRepository;
 import io.github.disparter.tokugawa.discord.core.services.ChapterLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -23,9 +22,9 @@ import java.util.Map;
  */
 @Component
 @Profile("migration")
+@Slf4j
 public class StoryContentMigrator implements CommandLineRunner {
 
-    private static final Logger logger = LoggerFactory.getLogger(StoryContentMigrator.class);
 
     private final ChapterLoader chapterLoader;
     private final ChapterRepository chapterRepository;
@@ -49,7 +48,7 @@ public class StoryContentMigrator implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        logger.info("Starting story content migration from Python to Java");
+        log.info("Starting story content migration from Python to Java");
         
         // Create Java data directories if they don't exist
         createDirectories();
@@ -63,7 +62,7 @@ public class StoryContentMigrator implements CommandLineRunner {
         // Load all chapters into the database
         chapterLoader.loadChapters();
         
-        logger.info("Story content migration completed");
+        log.info("Story content migration completed");
     }
     
     /**
@@ -74,28 +73,28 @@ public class StoryContentMigrator implements CommandLineRunner {
         Path dataDir = Paths.get(javaDataDirectory);
         if (!Files.exists(dataDir)) {
             Files.createDirectories(dataDir);
-            logger.info("Created data directory: {}", dataDir);
+            log.info("Created data directory: {}", dataDir);
         }
         
         // Create narrative directory
         Path narrativeDir = Paths.get(javaDataDirectory, "narrative");
         if (!Files.exists(narrativeDir)) {
             Files.createDirectories(narrativeDir);
-            logger.info("Created narrative directory: {}", narrativeDir);
+            log.info("Created narrative directory: {}", narrativeDir);
         }
         
         // Create chapters directory
         Path chaptersDir = Paths.get(javaDataDirectory, "narrative", "chapters");
         if (!Files.exists(chaptersDir)) {
             Files.createDirectories(chaptersDir);
-            logger.info("Created chapters directory: {}", chaptersDir);
+            log.info("Created chapters directory: {}", chaptersDir);
         }
         
         // Create clubs directory
         Path clubsDir = Paths.get(javaDataDirectory, "clubs");
         if (!Files.exists(clubsDir)) {
             Files.createDirectories(clubsDir);
-            logger.info("Created clubs directory: {}", clubsDir);
+            log.info("Created clubs directory: {}", clubsDir);
         }
     }
     
@@ -107,7 +106,7 @@ public class StoryContentMigrator implements CommandLineRunner {
         Path javaChaptersDir = Paths.get(javaDataDirectory, "narrative", "chapters");
         
         if (!Files.exists(pythonChaptersDir)) {
-            logger.warn("Python chapters directory not found: {}", pythonChaptersDir);
+            log.warn("Python chapters directory not found: {}", pythonChaptersDir);
             return;
         }
         
@@ -124,9 +123,9 @@ public class StoryContentMigrator implements CommandLineRunner {
                     // Write to Java JSON file
                     objectMapper.writeValue(targetPath.toFile(), chapterData);
                     
-                    logger.info("Migrated chapter: {} -> {}", path, targetPath);
+                    log.info("Migrated chapter: {} -> {}", path, targetPath);
                 } catch (Exception e) {
-                    logger.error("Error migrating chapter {}: {}", path, e.getMessage(), e);
+                    log.error("Error migrating chapter {}: {}", path, e.getMessage(), e);
                 }
             });
     }
@@ -139,7 +138,7 @@ public class StoryContentMigrator implements CommandLineRunner {
         Path javaClubsDir = Paths.get(javaDataDirectory, "clubs");
         
         if (!Files.exists(pythonClubsDir)) {
-            logger.warn("Python clubs directory not found: {}", pythonClubsDir);
+            log.warn("Python clubs directory not found: {}", pythonClubsDir);
             return;
         }
         
@@ -153,7 +152,7 @@ public class StoryContentMigrator implements CommandLineRunner {
                     // Create club directory if it doesn't exist
                     if (!Files.exists(javaClubDir)) {
                         Files.createDirectories(javaClubDir);
-                        logger.info("Created club directory: {}", javaClubDir);
+                        log.info("Created club directory: {}", javaClubDir);
                     }
                     
                     // Migrate club chapters
@@ -170,13 +169,13 @@ public class StoryContentMigrator implements CommandLineRunner {
                                 // Write to Java JSON file
                                 objectMapper.writeValue(targetPath.toFile(), chapterData);
                                 
-                                logger.info("Migrated club chapter: {} -> {}", path, targetPath);
+                                log.info("Migrated club chapter: {} -> {}", path, targetPath);
                             } catch (Exception e) {
-                                logger.error("Error migrating club chapter {}: {}", path, e.getMessage(), e);
+                                log.error("Error migrating club chapter {}: {}", path, e.getMessage(), e);
                             }
                         });
                 } catch (Exception e) {
-                    logger.error("Error migrating club {}: {}", clubDir, e.getMessage(), e);
+                    log.error("Error migrating club {}: {}", clubDir, e.getMessage(), e);
                 }
             });
     }

@@ -1,10 +1,9 @@
 package io.github.disparter.tokugawa.discord.core.services;
 
+import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.disparter.tokugawa.discord.core.models.Chapter;
 import io.github.disparter.tokugawa.discord.core.repositories.ChapterRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,9 +24,9 @@ import java.util.stream.Stream;
  * This is a migration of the Python FileChapterLoader class.
  */
 @Service
+@Slf4j
 public class ChapterLoader {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChapterLoader.class);
 
     private final ChapterRepository chapterRepository;
     private final ObjectMapper objectMapper;
@@ -52,7 +51,7 @@ public class ChapterLoader {
         // Load main story chapters
         Path mainChapterDir = Paths.get(dataDirectory, "narrative", "chapters");
         if (!Files.exists(mainChapterDir)) {
-            logger.warn("Main chapter directory not found: {}", mainChapterDir);
+            log.warn("Main chapter directory not found: {}", mainChapterDir);
         } else {
             loadChaptersFromDirectory(mainChapterDir, "");
         }
@@ -60,7 +59,7 @@ public class ChapterLoader {
         // Load club chapters
         Path clubChapterDir = Paths.get(dataDirectory, "clubs");
         if (!Files.exists(clubChapterDir)) {
-            logger.warn("Club chapter directory not found: {}", clubChapterDir);
+            log.warn("Club chapter directory not found: {}", clubChapterDir);
         } else {
             try (Stream<Path> clubDirs = Files.list(clubChapterDir)) {
                 clubDirs.filter(Files::isDirectory).forEach(clubDir -> {
@@ -68,7 +67,7 @@ public class ChapterLoader {
                     loadChaptersFromDirectory(clubDir, "club_" + clubId + "_");
                 });
             } catch (IOException e) {
-                logger.error("Error listing club directories: {}", e.getMessage(), e);
+                log.error("Error listing club directories: {}", e.getMessage(), e);
             }
         }
 
@@ -101,16 +100,16 @@ public class ChapterLoader {
 
                          if (chapter != null) {
                              chapters.put(chapterId, chapter);
-                             logger.info("Loaded chapter: {}", chapterId);
+                             log.info("Loaded chapter: {}", chapterId);
                          } else {
-                             logger.error("Failed to create chapter {}", chapterId);
+                             log.error("Failed to create chapter {}", chapterId);
                          }
                      } catch (IOException e) {
-                         logger.error("Error loading chapter {}: {}", path.getFileName(), e.getMessage(), e);
+                         log.error("Error loading chapter {}: {}", path.getFileName(), e.getMessage(), e);
                      }
                  });
         } catch (IOException e) {
-            logger.error("Error listing files in directory {}: {}", directory, e.getMessage(), e);
+            log.error("Error listing files in directory {}: {}", directory, e.getMessage(), e);
         }
     }
 
@@ -129,7 +128,7 @@ public class ChapterLoader {
                     .collect(Collectors.toList());
 
             if (!missingFields.isEmpty()) {
-                logger.error("Chapter {} is missing required fields: {}", 
+                log.error("Chapter {} is missing required fields: {}", 
                         chapterData.get("chapter_id"), String.join(", ", missingFields));
                 return null;
             }
@@ -153,7 +152,7 @@ public class ChapterLoader {
                     chapter.setType(Chapter.ChapterType.BRANCHING);
                     break;
                 default:
-                    logger.warn("Unknown chapter type: {}, defaulting to STORY", type);
+                    log.warn("Unknown chapter type: {}, defaulting to STORY", type);
                     chapter.setType(Chapter.ChapterType.STORY);
             }
 
@@ -225,7 +224,7 @@ public class ChapterLoader {
 
             return chapter;
         } catch (Exception e) {
-            logger.error("Error creating chapter {}: {}", 
+            log.error("Error creating chapter {}: {}", 
                     chapterData.get("chapter_id"), e.getMessage(), e);
             return null;
         }
@@ -238,9 +237,9 @@ public class ChapterLoader {
         for (Chapter chapter : chapters.values()) {
             try {
                 chapterRepository.save(chapter);
-                logger.info("Saved chapter to database: {}", chapter.getChapterId());
+                log.info("Saved chapter to database: {}", chapter.getChapterId());
             } catch (Exception e) {
-                logger.error("Error saving chapter {} to database: {}", 
+                log.error("Error saving chapter {} to database: {}", 
                         chapter.getChapterId(), e.getMessage(), e);
             }
         }
@@ -356,7 +355,7 @@ public class ChapterLoader {
 
             return true;
         } catch (Exception e) {
-            logger.error("Error checking chapter requirements: {}", e.getMessage(), e);
+            log.error("Error checking chapter requirements: {}", e.getMessage(), e);
             return false;
         }
     }

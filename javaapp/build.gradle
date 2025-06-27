@@ -75,8 +75,8 @@ task exportEnvironmentVariables {
     }
 }
 
-// Make bootJar depend on checkPostgresRunning and exportEnvironmentVariables
-bootJar.dependsOn checkPostgresRunning, exportEnvironmentVariables
+// These tasks can be run manually when needed
+// bootJar.dependsOn checkPostgresRunning, exportEnvironmentVariables
 
 tasks.named('test') {
     useJUnitPlatform()

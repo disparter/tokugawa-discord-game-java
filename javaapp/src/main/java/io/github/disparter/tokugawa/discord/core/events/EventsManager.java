@@ -1,9 +1,8 @@
 package io.github.disparter.tokugawa.discord.core.events;
 
+import lombok.extern.slf4j.Slf4j;
 import io.github.disparter.tokugawa.discord.bot.DiscordBot;
 import io.github.disparter.tokugawa.discord.core.services.PlayerService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
@@ -21,9 +20,9 @@ import java.util.concurrent.ScheduledFuture;
  * Manages and coordinates all types of events (daily, weekly, special).
  */
 @Service
+@Slf4j
 public class EventsManager {
     
-    private final Logger logger = LoggerFactory.getLogger(EventsManager.class);
     
     private final DiscordBot discordBot;
     private final PlayerService playerService;
@@ -83,15 +82,15 @@ public class EventsManager {
      */
     public void start() {
         if (isRunning) {
-            logger.info("Events manager is already running");
+            log.info("Events manager is already running");
             return;
         }
         
         try {
             isRunning = true;
-            logger.info("Started events manager");
+            log.info("Started events manager");
         } catch (Exception e) {
-            logger.error("Error starting events manager: {}", e.getMessage(), e);
+            log.error("Error starting events manager: {}", e.getMessage(), e);
             isRunning = false;
         }
     }
@@ -101,7 +100,7 @@ public class EventsManager {
      */
     public void stop() {
         if (!isRunning) {
-            logger.info("Events manager is not running");
+            log.info("Events manager is not running");
             return;
         }
         
@@ -118,9 +117,9 @@ public class EventsManager {
             weeklyEvents.cleanup();
             specialEvents.cleanup();
             
-            logger.info("Stopped events manager");
+            log.info("Stopped events manager");
         } catch (Exception e) {
-            logger.error("Error stopping events manager: {}", e.getMessage(), e);
+            log.error("Error stopping events manager: {}", e.getMessage(), e);
         }
     }
     
@@ -138,10 +137,10 @@ public class EventsManager {
             specialEvents.checkForSpecialEvents()
                     .subscribe(
                             null,
-                            e -> logger.error("Error checking for special events: {}", e.getMessage(), e)
+                            e -> log.error("Error checking for special events: {}", e.getMessage(), e)
                     );
         } catch (Exception e) {
-            logger.error("Error checking for special events: {}", e.getMessage(), e);
+            log.error("Error checking for special events: {}", e.getMessage(), e);
         }
     }
     
@@ -160,7 +159,7 @@ public class EventsManager {
             dailyEvents.sendDailyAnnouncement()
                     .subscribe(
                             null,
-                            e -> logger.error("Error sending daily announcement: {}", e.getMessage(), e)
+                            e -> log.error("Error sending daily announcement: {}", e.getMessage(), e)
                     );
             
             // Select daily subject
@@ -170,15 +169,15 @@ public class EventsManager {
             dailyEvents.announceDailySubject()
                     .subscribe(
                             null,
-                            e -> logger.error("Error announcing daily subject: {}", e.getMessage(), e)
+                            e -> log.error("Error announcing daily subject: {}", e.getMessage(), e)
                     );
             
             // Reset daily progress
             dailyEvents.resetDailyProgress();
             
-            logger.info("Daily events processed");
+            log.info("Daily events processed");
         } catch (Exception e) {
-            logger.error("Error handling daily events: {}", e.getMessage(), e);
+            log.error("Error handling daily events: {}", e.getMessage(), e);
         }
     }
     
@@ -197,12 +196,12 @@ public class EventsManager {
             weeklyEvents.startWeeklyTournament()
                     .subscribe(
                             null,
-                            e -> logger.error("Error starting weekly tournament: {}", e.getMessage(), e)
+                            e -> log.error("Error starting weekly tournament: {}", e.getMessage(), e)
                     );
             
-            logger.info("Weekly events processed");
+            log.info("Weekly events processed");
         } catch (Exception e) {
-            logger.error("Error handling weekly events: {}", e.getMessage(), e);
+            log.error("Error handling weekly events: {}", e.getMessage(), e);
         }
     }
     
@@ -221,19 +220,19 @@ public class EventsManager {
             weeklyEvents.checkForEndingTournament()
                     .subscribe(
                             null,
-                            e -> logger.error("Error checking for ending tournament: {}", e.getMessage(), e)
+                            e -> log.error("Error checking for ending tournament: {}", e.getMessage(), e)
                     );
             
             // Check for ending special event
             specialEvents.checkForEndingSpecialEvent()
                     .subscribe(
                             null,
-                            e -> logger.error("Error checking for ending special event: {}", e.getMessage(), e)
+                            e -> log.error("Error checking for ending special event: {}", e.getMessage(), e)
                     );
             
-            logger.info("Checked for ending events");
+            log.info("Checked for ending events");
         } catch (Exception e) {
-            logger.error("Error checking for ending events: {}", e.getMessage(), e);
+            log.error("Error checking for ending events: {}", e.getMessage(), e);
         }
     }
     
@@ -265,9 +264,9 @@ public class EventsManager {
             specialInfo.put("end_time", null);
             events.put("special", specialInfo);
             
-            logger.info("Retrieved current events information");
+            log.info("Retrieved current events information");
         } catch (Exception e) {
-            logger.error("Error getting current events: {}", e.getMessage(), e);
+            log.error("Error getting current events: {}", e.getMessage(), e);
         }
         
         return events;
@@ -278,14 +277,14 @@ public class EventsManager {
      */
     public void startDailyEvents() {
         if (!isRunning) {
-            logger.warn("Events manager is not running");
+            log.warn("Events manager is not running");
             return;
         }
         
         dailyEvents.sendDailyAnnouncement()
                 .subscribe(
                         null,
-                        e -> logger.error("Error starting daily events: {}", e.getMessage(), e)
+                        e -> log.error("Error starting daily events: {}", e.getMessage(), e)
                 );
     }
     
@@ -294,14 +293,14 @@ public class EventsManager {
      */
     public void startWeeklyEvents() {
         if (!isRunning) {
-            logger.warn("Events manager is not running");
+            log.warn("Events manager is not running");
             return;
         }
         
         weeklyEvents.startWeeklyTournament()
                 .subscribe(
                         null,
-                        e -> logger.error("Error starting weekly events: {}", e.getMessage(), e)
+                        e -> log.error("Error starting weekly events: {}", e.getMessage(), e)
                 );
     }
     
@@ -312,14 +311,14 @@ public class EventsManager {
      */
     public void startSpecialEvents(String eventType) {
         if (!isRunning) {
-            logger.warn("Events manager is not running");
+            log.warn("Events manager is not running");
             return;
         }
         
         specialEvents.startSpecialEvent(eventType)
                 .subscribe(
                         null,
-                        e -> logger.error("Error starting special events: {}", e.getMessage(), e)
+                        e -> log.error("Error starting special events: {}", e.getMessage(), e)
                 );
     }
     
@@ -329,6 +328,6 @@ public class EventsManager {
      * @param error The error that occurred
      */
     private void handleError(Throwable error) {
-        logger.error("Error in event processing: {}", error.getMessage(), error);
+        log.error("Error in event processing: {}", error.getMessage(), error);
     }
 }

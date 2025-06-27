@@ -13,8 +13,7 @@ import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.services.EventService;
 import io.github.disparter.tokugawa.discord.core.services.GameCalendarService;
 import io.github.disparter.tokugawa.discord.core.services.PlayerService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -26,10 +25,9 @@ import java.util.Optional;
 /**
  * A command that allows players to view and interact with events.
  */
+@Slf4j
 @Component
 public class EventCommand implements SlashCommand {
-
-    private static final Logger logger = LoggerFactory.getLogger(EventCommand.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final EventService eventService;

@@ -4,10 +4,12 @@ import io.github.disparter.tokugawa.discord.core.models.Duel;
 import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.models.NPC;
 import io.github.disparter.tokugawa.discord.core.models.Technique;
+import io.github.disparter.tokugawa.discord.core.models.Bet.BetType;
 import io.github.disparter.tokugawa.discord.core.repositories.DuelRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.PlayerRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.NPCRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.TechniqueRepository;
+import io.github.disparter.tokugawa.discord.core.services.BettingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ public class DuelServiceImpl implements DuelService {
     private final PlayerService playerService;
     private final NarrativeService narrativeService;
     private final RelationshipService relationshipService;
+    private final BettingService bettingService;
 
     private final Random random = new Random();
 
@@ -44,7 +47,8 @@ public class DuelServiceImpl implements DuelService {
             TechniqueRepository techniqueRepository,
             PlayerService playerService,
             NarrativeService narrativeService,
-            RelationshipService relationshipService) {
+            RelationshipService relationshipService,
+            BettingService bettingService) {
         this.duelRepository = duelRepository;
         this.playerRepository = playerRepository;
         this.npcRepository = npcRepository;
@@ -52,6 +56,7 @@ public class DuelServiceImpl implements DuelService {
         this.playerService = playerService;
         this.narrativeService = narrativeService;
         this.relationshipService = relationshipService;
+        this.bettingService = bettingService;
     }
 
     @Override
@@ -266,10 +271,14 @@ public class DuelServiceImpl implements DuelService {
         // Update narrative progress if applicable
         narrativeService.updateProgressFromDuel(duel.getPlayer().getId(), duel.getNpc().getId(), duel.getPlayerWon());
 
+        // Resolve bets on the duel
+        int resolvedBets = bettingService.resolveDuelBets(duelId, duel.getPlayerWon() ? duel.getPlayer().getId() : null);
+
         // Return the final duel state with results
         Map<String, Object> result = getDuelState(duel);
         result.put("reputationChange", duel.getPlayerWon() ? 10 : -5);
         result.put("relationshipChange", duel.getPlayerWon() ? 5 : -2);
+        result.put("resolvedBets", resolvedBets);
 
         return result;
     }
@@ -373,6 +382,9 @@ public class DuelServiceImpl implements DuelService {
         duel.setStatus(Duel.DuelStatus.CANCELED);
         duel.setEndTime(new Date());
         duelRepository.save(duel);
+
+        // Cancel all bets on this duel
+        bettingService.cancelDuelBets(duelId);
 
         return true;
     }

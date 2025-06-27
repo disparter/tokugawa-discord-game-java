@@ -1,5 +1,6 @@
 package io.github.disparter.tokugawa.discord.core.events;
 
+import lombok.extern.slf4j.Slf4j;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.User;
@@ -8,21 +9,22 @@ import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
 import io.github.disparter.tokugawa.discord.bot.DiscordBot;
+import reactor.core.publisher.Mono;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Mono;
 
 /**
  * Base class for all events.
  * Provides common functionality for event handling.
  */
 public abstract class BaseEvent {
-    
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
-    
+
+    protected static final Logger log = LoggerFactory.getLogger(BaseEvent.class);
+
+
     protected final DiscordBot discordBot;
     protected Long channelId;
-    
+
     /**
      * Constructor for BaseEvent.
      *
@@ -33,7 +35,7 @@ public abstract class BaseEvent {
         this.discordBot = discordBot;
         this.channelId = channelId;
     }
-    
+
     /**
      * Find a channel by ID.
      *
@@ -45,7 +47,7 @@ public abstract class BaseEvent {
                 .getChannelById(discord4j.common.util.Snowflake.of(channelId))
                 .cast(MessageChannel.class);
     }
-    
+
     /**
      * Send an announcement to the event channel.
      *
@@ -56,10 +58,10 @@ public abstract class BaseEvent {
      */
     protected Mono<Void> sendAnnouncement(String title, String description, Color color) {
         if (channelId == null) {
-            logger.error("No channel ID set for event announcement");
+            log.error("No channel ID set for event announcement");
             return Mono.empty();
         }
-        
+
         return findChannel(channelId)
                 .flatMap(channel -> {
                     EmbedCreateSpec embed = EmbedCreateSpec.builder()
@@ -67,18 +69,18 @@ public abstract class BaseEvent {
                             .description(description)
                             .color(color)
                             .build();
-                    
+
                     return channel.createMessage(MessageCreateSpec.builder()
                             .addEmbed(embed)
                             .build())
                             .then();
                 })
                 .onErrorResume(e -> {
-                    logger.error("Error sending announcement: {}", e.getMessage());
+                    log.error("Error sending announcement: {}", e.getMessage());
                     return Mono.empty();
                 });
     }
-    
+
     /**
      * Create a basic embed for announcements (default blue).
      *
@@ -93,7 +95,7 @@ public abstract class BaseEvent {
                 .color(Color.BLUE)
                 .build();
     }
-    
+
     /**
      * Create an error embed.
      *
@@ -108,7 +110,7 @@ public abstract class BaseEvent {
                 .color(Color.RED)
                 .build();
     }
-    
+
     /**
      * Create a success embed.
      *
@@ -123,7 +125,7 @@ public abstract class BaseEvent {
                 .color(Color.GREEN)
                 .build();
     }
-    
+
     /**
      * Get a user by ID.
      *
@@ -134,7 +136,7 @@ public abstract class BaseEvent {
         return discordBot.getGatewayClient()
                 .getUserById(discord4j.common.util.Snowflake.of(userId));
     }
-    
+
     /**
      * Get a guild by ID.
      *
@@ -145,16 +147,16 @@ public abstract class BaseEvent {
         return discordBot.getGatewayClient()
                 .getGuildById(discord4j.common.util.Snowflake.of(guildId));
     }
-    
+
     /**
      * Handle errors during event processing.
      *
      * @param error The error that occurred
      */
     protected void handleError(Throwable error) {
-        logger.error("Error in event processing: {}", error.getMessage(), error);
+        log.error("Error in event processing: {}", error.getMessage(), error);
     }
-    
+
     /**
      * Clean up resources.
      */

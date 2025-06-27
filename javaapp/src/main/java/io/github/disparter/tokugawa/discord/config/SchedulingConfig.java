@@ -1,7 +1,6 @@
 package io.github.disparter.tokugawa.discord.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -14,9 +13,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  */
 @Configuration
 @EnableScheduling
+@Slf4j
 public class SchedulingConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(SchedulingConfig.class);
 
     /**
      * Creates a task scheduler for scheduled tasks.
@@ -29,7 +28,7 @@ public class SchedulingConfig {
         scheduler.setPoolSize(5); // Set an appropriate pool size
         scheduler.setThreadNamePrefix("event-scheduler-");
         scheduler.setErrorHandler(throwable -> {
-            logger.error("Error in scheduled task: {}", throwable.getMessage(), throwable);
+            log.error("Error in scheduled task: {}", throwable.getMessage(), throwable);
         });
         return scheduler;
     }

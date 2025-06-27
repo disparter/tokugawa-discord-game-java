@@ -100,4 +100,12 @@ public interface BettingService {
      * @return a list of players with their betting statistics
      */
     List<Map<String, Object>> getBettingRanking(int limit);
+
+    /**
+     * Cancel all active bets for a duel.
+     *
+     * @param duelId the duel ID
+     * @return the number of bets cancelled
+     */
+    int cancelDuelBets(String duelId);
 }

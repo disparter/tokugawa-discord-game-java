@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -187,5 +188,11 @@ public class ProgressServiceImpl implements ProgressService {
     public Progress save(Progress progress) {
         // Placeholder implementation
         return progressRepository.save(progress);
+    }
+
+    @Override
+    public Progress getProgressByPlayerId(Long playerId) {
+        Optional<Progress> progressOpt = progressRepository.findByPlayerId(playerId);
+        return progressOpt.orElse(null);
     }
 }

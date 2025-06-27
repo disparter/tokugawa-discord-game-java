@@ -42,12 +42,12 @@ public interface ProgressRepository extends JpaRepository<Progress, Long> {
     List<Progress> findByCurrentArc(String currentArc);
 
     /**
-     * Find progress by current chapter.
+     * Find progress by current chapter ID.
      *
-     * @param currentChapter the current chapter
-     * @return the list of progress with the specified current chapter
+     * @param currentChapterId the current chapter ID
+     * @return the list of progress with the specified current chapter ID
      */
-    List<Progress> findByCurrentChapter(String currentChapter);
+    List<Progress> findByCurrentChapterId(String currentChapterId);
 
     /**
      * Find progress by completed chapter.

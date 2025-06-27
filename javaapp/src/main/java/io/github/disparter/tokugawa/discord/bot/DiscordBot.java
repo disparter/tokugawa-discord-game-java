@@ -5,8 +5,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import io.github.disparter.tokugawa.discord.bot.listeners.SlashCommandListener;
 import io.github.disparter.tokugawa.discord.core.events.EventsManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -17,10 +16,9 @@ import javax.annotation.PreDestroy;
 /**
  * Main Discord bot class that handles the connection to Discord using Discord4J.
  */
+@Slf4j
 @Component
 public class DiscordBot {
-
-    private final Logger logger = LoggerFactory.getLogger(DiscordBot.class);
 
     @Value("${discord.token}")
     private String token;
@@ -50,12 +48,12 @@ public class DiscordBot {
                 gatewayClient.on(ChatInputInteractionEvent.class, slashCommandListener::handle)
                         .subscribe();
 
-                logger.info("Discord bot connected successfully!");
+                log.info("Discord bot connected successfully!");
             } else {
-                logger.error("Failed to connect to Discord. Check your token.");
+                log.error("Failed to connect to Discord. Check your token.");
             }
         } catch (Exception e) {
-            logger.error("Error initializing Discord bot: {}", e.getMessage(), e);
+            log.error("Error initializing Discord bot: {}", e.getMessage(), e);
         }
     }
 
@@ -67,10 +65,10 @@ public class DiscordBot {
         try {
             if (gatewayClient != null) {
                 gatewayClient.logout().block();
-                logger.info("Discord bot disconnected.");
+                log.info("Discord bot disconnected.");
             }
         } catch (Exception e) {
-            logger.error("Error disconnecting Discord bot: {}", e.getMessage(), e);
+            log.error("Error disconnecting Discord bot: {}", e.getMessage(), e);
         }
     }
 

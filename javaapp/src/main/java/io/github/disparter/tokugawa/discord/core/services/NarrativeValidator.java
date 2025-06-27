@@ -1,10 +1,9 @@
 package io.github.disparter.tokugawa.discord.core.services;
 
+import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.disparter.tokugawa.discord.core.models.Chapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +17,9 @@ import java.util.Map;
  * This service checks for broken links, missing chapters, and other issues in the narrative flow.
  */
 @Service
+@Slf4j
 public class NarrativeValidator {
 
-    private static final Logger logger = LoggerFactory.getLogger(NarrativeValidator.class);
 
     private final ChapterLoader chapterLoader;
     private final ObjectMapper objectMapper;

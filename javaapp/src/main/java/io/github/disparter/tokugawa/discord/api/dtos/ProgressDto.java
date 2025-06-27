@@ -24,7 +24,7 @@ public class ProgressDto {
     private Map<String, String> choices;
     private Map<String, String> triggeredEvents;
     private double completionPercentage;
-    
+
     /**
      * Convert a Progress entity to a ProgressDto.
      *
@@ -36,18 +36,18 @@ public class ProgressDto {
         if (progress == null) {
             return null;
         }
-        
+
         ProgressDto dto = new ProgressDto();
         dto.setId(progress.getId());
         dto.setPlayerId(progress.getPlayer() != null ? progress.getPlayer().getId() : null);
         dto.setCurrentArc(progress.getCurrentArc());
-        dto.setCurrentChapter(progress.getCurrentChapter());
+        dto.setCurrentChapter(progress.getCurrentChapterId());
         dto.setCompletedChapters(progress.getCompletedChapters());
         dto.setCompletedArcs(progress.getCompletedArcs());
         dto.setChoices(progress.getChoices());
         dto.setTriggeredEvents(progress.getTriggeredEvents());
         dto.setCompletionPercentage(completionPercentage);
-        
+
         return dto;
     }
 }

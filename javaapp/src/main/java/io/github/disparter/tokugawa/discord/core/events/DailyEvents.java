@@ -11,14 +11,17 @@ import io.github.disparter.tokugawa.discord.core.services.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 /**
  * Handles daily events and announcements.
  */
-@Component
 public class DailyEvents extends BaseEvent {
+
+    private static final Logger log = LoggerFactory.getLogger(DailyEvents.class);
 
     private final PlayerService playerService;
     private Map<String, Object> dailySubject = new HashMap<>();
@@ -31,7 +34,6 @@ public class DailyEvents extends BaseEvent {
      * @param playerService The player service
      * @param channelId The channel ID for announcements (optional)
      */
-    @Autowired
     public DailyEvents(DiscordBot discordBot, PlayerService playerService, Long channelId) {
         super(discordBot, channelId);
         this.playerService = playerService;
@@ -123,15 +125,15 @@ public class DailyEvents extends BaseEvent {
                         // Save player
                         playerService.save(player);
 
-                        logger.info("Player {} participated in {} class", username, subject);
+                        log.info("Player {} participated in {} class", username, subject);
                         return Mono.empty().then();
                     })
                     .onErrorResume(e -> {
-                        logger.error("Error handling subject selection: {}", e.getMessage());
+                        log.error("Error handling subject selection: {}", e.getMessage());
                         return Mono.empty().then();
                     });
         } catch (Exception e) {
-            logger.error("Error handling subject selection: {}", e.getMessage());
+            log.error("Error handling subject selection: {}", e.getMessage());
             return Mono.empty().then();
         }
     }
@@ -148,7 +150,7 @@ public class DailyEvents extends BaseEvent {
             ActionRow buttons = createDailyButtons(subjects);
 
             if (channelId == null) {
-                logger.error("No channel ID set for daily announcement");
+                log.error("No channel ID set for daily announcement");
                 return Mono.empty();
             }
 
@@ -158,10 +160,10 @@ public class DailyEvents extends BaseEvent {
                             .addComponent(buttons)
                             .build()))
                     .flatMap(message -> message.pin().thenReturn(message))
-                    .doOnSuccess(message -> logger.info("Daily announcement sent"))
-                    .doOnError(e -> logger.error("Error sending daily announcement: {}", e.getMessage()));
+                    .doOnSuccess(message -> log.info("Daily announcement sent"))
+                    .doOnError(e -> log.error("Error sending daily announcement: {}", e.getMessage()));
         } catch (Exception e) {
-            logger.error("Error sending daily announcement: {}", e.getMessage());
+            log.error("Error sending daily announcement: {}", e.getMessage());
             return Mono.empty();
         }
     }
@@ -173,7 +175,7 @@ public class DailyEvents extends BaseEvent {
         List<String> subjects = selectSubjects();
         dailySubject = new HashMap<>();
         dailySubject.put("subjects", subjects);
-        logger.info("Daily subjects selected: {}", subjects);
+        log.info("Daily subjects selected: {}", subjects);
     }
 
     /**
@@ -185,7 +187,7 @@ public class DailyEvents extends BaseEvent {
         @SuppressWarnings("unchecked")
         List<String> subjects = (List<String>) dailySubject.getOrDefault("subjects", Collections.emptyList());
         if (subjects.isEmpty()) {
-            logger.error("No daily subjects selected");
+            log.error("No daily subjects selected");
             return Mono.empty();
         }
 
@@ -201,7 +203,7 @@ public class DailyEvents extends BaseEvent {
      */
     public void resetDailyProgress() {
         playerProgress.put("daily", new HashMap<>());
-        logger.info("Daily progress reset");
+        log.info("Daily progress reset");
     }
 
     /**
@@ -212,6 +214,6 @@ public class DailyEvents extends BaseEvent {
         // Clean up any resources
         dailySubject.clear();
         playerProgress.get("daily").clear();
-        logger.info("Daily events cleaned up");
+        log.info("Daily events cleaned up");
     }
 }

@@ -554,16 +554,16 @@ public class ClubCommand implements SlashCommand {
             StringBuilder response = new StringBuilder();
             response.append("Pontuações da competição **").append(competitionName).append("** atualizadas!\n\n");
 
-            for (int i = 0; i < updatedClubNames.size(); i++) {
+            for (String clubName : updatedClubNames) {
                 Long clubId = allClubs.stream()
-                        .filter(c -> c.getName().equalsIgnoreCase(updatedClubNames.get(i)))
+                        .filter(c -> c.getName().equalsIgnoreCase(clubName))
                         .findFirst()
                         .map(Club::getId)
                         .orElse(null);
 
                 if (clubId != null) {
                     Integer score = updatedScores.get(clubId);
-                    response.append("- **").append(updatedClubNames.get(i)).append("**: ")
+                    response.append("- **").append(clubName).append("**: ")
                             .append(score != null ? score : 0).append(" pontos\n");
                 }
             }
