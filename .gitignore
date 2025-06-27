@@ -64,3 +64,4 @@ env/
 **/.env
 /javaapp/.env
 /untitled/.env
+/out/
