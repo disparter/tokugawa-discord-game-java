@@ -1,5 +1,60 @@
+# Project documentation
 /python-project-documentation.md
-/.idea/
 /migration-requirements.md
 /java-migration-plan.md
+/java-implementation-summary.md
+
+# IntelliJ IDEA
+/.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.metadata/
+
+# VS Code
+.vscode/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+
+# Gradle
+.gradle/
+build/
+javaapp/build/
+javaapp/.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# OS specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python project
 /untitled/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
