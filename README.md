@@ -8,6 +8,27 @@ A Discord game based on the Tokugawa universe, migrated from Python to Java.
 - `untitled/`: Original Python implementation
 - `git-hooks/`: Git hooks for semantic versioning
 
+## Environment Setup
+
+This project uses environment files (.env) to store configuration settings and secrets:
+
+1. The `.env` files are excluded from version control via `.gitignore`
+2. Template files `.env.example` are provided with placeholders
+3. Copy `.env.example` to `.env` and fill in your actual values
+
+### Java Application Setup
+
+1. Copy `javaapp/.env.example` to `javaapp/.env`
+2. Fill in your Discord token and other configuration values
+3. Build and run the application
+
+### Note on Security
+
+When working with environment files:
+- Never commit `.env` files with real secrets
+- Use the provided `.env.example` templates
+- Keep your tokens and secrets secure
+
 ## Semantic Versioning
 
 This project uses semantic versioning for git commits, pushes, and tags.
