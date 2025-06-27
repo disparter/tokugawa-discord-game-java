@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -394,6 +396,12 @@ public class ClubCommand implements SlashCommand {
     private Mono<Void> handleCompetition(ChatInputInteractionEvent event, Player player) {
         Optional<ApplicationCommandInteractionOption> actionOption = 
                 event.getOption("acao");
+        Optional<ApplicationCommandInteractionOption> nomeOption = 
+                event.getOption("nome");
+        Optional<ApplicationCommandInteractionOption> clubesOption = 
+                event.getOption("clubes");
+        Optional<ApplicationCommandInteractionOption> pontosOption = 
+                event.getOption("pontos");
 
         if (actionOption.isEmpty() || actionOption.get().getValue().isEmpty()) {
             return event.reply()
@@ -422,21 +430,195 @@ public class ClubCommand implements SlashCommand {
 
         // Handle different competition actions
         if ("iniciar".equalsIgnoreCase(action)) {
-            // Implementation for starting a competition would go here
-            // This would require additional options like competition name and participants
+            // Check required parameters for starting a competition
+            if (nomeOption.isEmpty() || nomeOption.get().getValue().isEmpty() ||
+                clubesOption.isEmpty() || clubesOption.get().getValue().isEmpty()) {
+                return event.reply()
+                        .withContent("Para iniciar uma competição, você precisa especificar um nome e os clubes participantes.")
+                        .withEphemeral(true);
+            }
+
+            String competitionName = nomeOption.get().getValue().get().asString();
+            String clubsString = clubesOption.get().getValue().get().asString();
+            String[] clubNames = clubsString.split(",");
+
+            // Find club IDs from names
+            List<Long> participatingClubIds = new ArrayList<>();
+            List<String> participatingClubNames = new ArrayList<>();
+            List<Club> allClubs = clubService.getAllClubs();
+
+            // Always include the player's club
+            participatingClubIds.add(playerClub.getId());
+            participatingClubNames.add(playerClub.getName());
+
+            // Add other clubs
+            for (String clubName : clubNames) {
+                String trimmedName = clubName.trim();
+                if (!trimmedName.isEmpty()) {
+                    Optional<Club> clubOpt = allClubs.stream()
+                            .filter(c -> c.getName().equalsIgnoreCase(trimmedName))
+                            .findFirst();
+
+                    if (clubOpt.isPresent() && !clubOpt.get().getId().equals(playerClub.getId())) {
+                        participatingClubIds.add(clubOpt.get().getId());
+                        participatingClubNames.add(clubOpt.get().getName());
+                    }
+                }
+            }
+
+            if (participatingClubIds.size() <= 1) {
+                return event.reply()
+                        .withContent("Você precisa incluir pelo menos um outro clube além do seu para iniciar uma competição.")
+                        .withEphemeral(true);
+            }
+
+            // Start the competition
+            Map<Long, Integer> initialScores = clubService.startCompetition(competitionName, participatingClubIds);
+
+            // Format the response
+            StringBuilder response = new StringBuilder();
+            response.append("Competição **").append(competitionName).append("** iniciada!\n\n");
+            response.append("Clubes participantes:\n");
+
+            for (int i = 0; i < participatingClubIds.size(); i++) {
+                Long clubId = participatingClubIds.get(i);
+                String clubName = participatingClubNames.get(i);
+                Integer score = initialScores.get(clubId);
+
+                response.append("- **").append(clubName).append("**: ")
+                        .append(score != null ? score : 0).append(" pontos\n");
+            }
+
             return event.reply()
-                    .withContent("Funcionalidade de iniciar competição ainda não implementada.")
-                    .withEphemeral(true);
+                    .withContent(response.toString());
+
         } else if ("atualizar".equalsIgnoreCase(action)) {
-            // Implementation for updating competition scores would go here
+            // Check required parameters for updating competition scores
+            if (nomeOption.isEmpty() || nomeOption.get().getValue().isEmpty() ||
+                clubesOption.isEmpty() || clubesOption.get().getValue().isEmpty() ||
+                pontosOption.isEmpty() || pontosOption.get().getValue().isEmpty()) {
+                return event.reply()
+                        .withContent("Para atualizar pontuações, você precisa especificar o nome da competição, os clubes e os pontos.")
+                        .withEphemeral(true);
+            }
+
+            String competitionName = nomeOption.get().getValue().get().asString();
+            String clubsString = clubesOption.get().getValue().get().asString();
+            String pointsString = pontosOption.get().getValue().get().asString();
+
+            String[] clubNames = clubsString.split(",");
+            String[] pointsArray = pointsString.split(",");
+
+            if (clubNames.length != pointsArray.length) {
+                return event.reply()
+                        .withContent("O número de clubes deve ser igual ao número de pontuações.")
+                        .withEphemeral(true);
+            }
+
+            // Find club IDs from names and create scores map
+            Map<Long, Integer> scores = new HashMap<>();
+            List<String> updatedClubNames = new ArrayList<>();
+            List<Club> allClubs = clubService.getAllClubs();
+
+            for (int i = 0; i < clubNames.length; i++) {
+                String trimmedName = clubNames[i].trim();
+                if (!trimmedName.isEmpty()) {
+                    Optional<Club> clubOpt = allClubs.stream()
+                            .filter(c -> c.getName().equalsIgnoreCase(trimmedName))
+                            .findFirst();
+
+                    if (clubOpt.isPresent()) {
+                        try {
+                            int points = Integer.parseInt(pointsArray[i].trim());
+                            scores.put(clubOpt.get().getId(), points);
+                            updatedClubNames.add(clubOpt.get().getName());
+                        } catch (NumberFormatException e) {
+                            return event.reply()
+                                    .withContent("Pontuação inválida: " + pointsArray[i].trim())
+                                    .withEphemeral(true);
+                        }
+                    }
+                }
+            }
+
+            if (scores.isEmpty()) {
+                return event.reply()
+                        .withContent("Nenhum clube válido encontrado para atualizar pontuações.")
+                        .withEphemeral(true);
+            }
+
+            // Update competition scores
+            Map<Long, Integer> updatedScores = clubService.updateCompetitionScores(competitionName, scores);
+
+            // Format the response
+            StringBuilder response = new StringBuilder();
+            response.append("Pontuações da competição **").append(competitionName).append("** atualizadas!\n\n");
+
+            for (int i = 0; i < updatedClubNames.size(); i++) {
+                Long clubId = allClubs.stream()
+                        .filter(c -> c.getName().equalsIgnoreCase(updatedClubNames.get(i)))
+                        .findFirst()
+                        .map(Club::getId)
+                        .orElse(null);
+
+                if (clubId != null) {
+                    Integer score = updatedScores.get(clubId);
+                    response.append("- **").append(updatedClubNames.get(i)).append("**: ")
+                            .append(score != null ? score : 0).append(" pontos\n");
+                }
+            }
+
             return event.reply()
-                    .withContent("Funcionalidade de atualizar pontuação de competição ainda não implementada.")
-                    .withEphemeral(true);
+                    .withContent(response.toString());
+
         } else if ("encerrar".equalsIgnoreCase(action)) {
-            // Implementation for ending a competition would go here
+            // Check required parameters for ending a competition
+            if (nomeOption.isEmpty() || nomeOption.get().getValue().isEmpty()) {
+                return event.reply()
+                        .withContent("Para encerrar uma competição, você precisa especificar o nome.")
+                        .withEphemeral(true);
+            }
+
+            String competitionName = nomeOption.get().getValue().get().asString();
+
+            // End the competition
+            Map<Long, Integer> finalScores = clubService.endCompetition(competitionName);
+
+            if (finalScores.isEmpty()) {
+                return event.reply()
+                        .withContent("Competição não encontrada ou já encerrada: " + competitionName)
+                        .withEphemeral(true);
+            }
+
+            // Get club names and sort by score
+            List<Map.Entry<Long, Integer>> sortedScores = new ArrayList<>(finalScores.entrySet());
+            sortedScores.sort(Map.Entry.<Long, Integer>comparingByValue().reversed());
+
+            List<Club> allClubs = clubService.getAllClubs();
+
+            // Format the response
+            StringBuilder response = new StringBuilder();
+            response.append("Competição **").append(competitionName).append("** encerrada!\n\n");
+            response.append("Resultados finais:\n");
+
+            for (int i = 0; i < sortedScores.size(); i++) {
+                Long clubId = sortedScores.get(i).getKey();
+                Integer score = sortedScores.get(i).getValue();
+
+                String clubName = allClubs.stream()
+                        .filter(c -> c.getId().equals(clubId))
+                        .findFirst()
+                        .map(Club::getName)
+                        .orElse("Clube Desconhecido");
+
+                response.append(i + 1).append(". **").append(clubName).append("**: ")
+                        .append(score).append(" pontos\n");
+            }
+
+            response.append("\nOs rankings dos clubes foram atualizados com base nos resultados.");
+
             return event.reply()
-                    .withContent("Funcionalidade de encerrar competição ainda não implementada.")
-                    .withEphemeral(true);
+                    .withContent(response.toString());
         } else {
             return event.reply()
                     .withContent("Ação desconhecida: " + action + ". Use 'iniciar', 'atualizar' ou 'encerrar'.")
