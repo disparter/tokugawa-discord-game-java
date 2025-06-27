@@ -3,6 +3,7 @@ package io.github.disparter.tokugawa.discord.core.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.disparter.tokugawa.discord.core.models.Chapter;
+import io.github.disparter.tokugawa.discord.core.models.Consequence;
 import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.models.Progress;
 import io.github.disparter.tokugawa.discord.core.repositories.ChapterRepository;
@@ -36,6 +37,9 @@ public class NarrativeServiceImpl implements NarrativeService {
     private final ChapterLoader chapterLoader;
     private final ObjectMapper objectMapper;
     private final NarrativeValidator narrativeValidator;
+    private final ConsequenceService consequenceService;
+    private final PlayerService playerService;
+    private final ReputationService reputationService;
 
     @Autowired
     public NarrativeServiceImpl(ChapterRepository chapterRepository, 
@@ -43,13 +47,19 @@ public class NarrativeServiceImpl implements NarrativeService {
                                ProgressRepository progressRepository,
                                ChapterLoader chapterLoader,
                                ObjectMapper objectMapper,
-                               NarrativeValidator narrativeValidator) {
+                               NarrativeValidator narrativeValidator,
+                               ConsequenceService consequenceService,
+                               PlayerService playerService,
+                               ReputationService reputationService) {
         this.chapterRepository = chapterRepository;
         this.playerRepository = playerRepository;
         this.progressRepository = progressRepository;
         this.chapterLoader = chapterLoader;
         this.objectMapper = objectMapper;
         this.narrativeValidator = narrativeValidator;
+        this.consequenceService = consequenceService;
+        this.playerService = playerService;
+        this.reputationService = reputationService;
     }
 
     @Override
@@ -293,7 +303,48 @@ public class NarrativeServiceImpl implements NarrativeService {
 
         // Apply choice effects
         if (choiceData.containsKey("effects")) {
-            applyChoiceEffects(player, progress, (Map<String, Object>) choiceData.get("effects"));
+            Map<String, Object> effects = (Map<String, Object>) choiceData.get("effects");
+            applyChoiceEffects(player, progress, effects);
+
+            // Register the choice and its consequences
+            String choiceText = choiceData.containsKey("text") ? (String) choiceData.get("text") : choice;
+            String decisionContext = "Chapter " + currentChapterId + ", Dialogue " + currentDialogueIndex;
+            String consequenceName = "Choice in " + chapter.getTitle();
+            String consequenceDescription = "You chose: " + choiceText;
+
+            // Convert effects to a list of strings for the consequence
+            List<String> effectsList = new ArrayList<>();
+            for (Map.Entry<String, Object> entry : effects.entrySet()) {
+                effectsList.add(entry.getKey() + ":" + entry.getValue());
+            }
+
+            // Use ConsequenceService to track the decision
+            consequenceService.trackPlayerDecision(
+                playerId,
+                currentChapterId,
+                "scene_" + currentDialogueIndex,
+                choiceText,
+                decisionContext,
+                consequenceName,
+                consequenceDescription,
+                Consequence.ConsequenceType.IMMEDIATE,
+                effectsList,
+                List.of(choiceKey),
+                new ArrayList<>()
+            );
+
+            // Use PlayerService and ReputationService to apply effects
+            playerService.updatePlayerAttributes(player);
+
+            // Update reputation if applicable
+            if (effects.containsKey("faction_reputation")) {
+                Map<String, Object> factionChanges = (Map<String, Object>) effects.get("faction_reputation");
+                for (Map.Entry<String, Object> entry : factionChanges.entrySet()) {
+                    String factionId = entry.getKey();
+                    int change = ((Number) entry.getValue()).intValue();
+                    reputationService.updateFactionReputation(playerId, factionId, change);
+                }
+            }
         }
 
         // Update dialogue index
