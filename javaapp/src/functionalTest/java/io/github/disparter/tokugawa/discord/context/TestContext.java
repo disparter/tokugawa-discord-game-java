@@ -2,8 +2,6 @@ package io.github.disparter.tokugawa.discord.context;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +11,6 @@ import java.util.Optional;
  * Contexto compartilhado entre os steps de teste de um mesmo cenário.
  * Mantém estado e dados temporários necessários durante a execução dos testes funcionais.
  */
-@Component
-@Scope("prototype")
 @Data
 @Slf4j
 public class TestContext {

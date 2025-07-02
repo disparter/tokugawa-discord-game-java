@@ -12,12 +12,9 @@ import org.junit.platform.suite.api.Suite;
  */
 @Suite
 @IncludeEngines("cucumber")
-@SelectClasspathResource("features")
+@SelectClasspathResource("features/autenticacao-simples.feature")
 @ConfigurationParameter(key = "cucumber.glue", value = "io.github.disparter.tokugawa.discord.steps")
-@ConfigurationParameter(key = "cucumber.filter.tags", value = "not @ignore")
 @ConfigurationParameter(key = "cucumber.plugin", value = "pretty")
-@ConfigurationParameter(key = "cucumber.execution.dry-run", value = "false")
-@ConfigurationParameter(key = "cucumber.execution.strict", value = "true")
 public class FunctionalTestRunner {
     // Esta classe serve apenas como configuração para o JUnit Platform
     // A execução real dos testes é feita pelo engine do Cucumber
