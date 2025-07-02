@@ -1,0 +1,25 @@
+{
+  "id": "${messageId}",
+  "type": 0,
+  "content": "${content}",
+  "channel_id": "${channelId}",
+  "author": {
+    "id": "123456789012345678",
+    "username": "TestBot",
+    "discriminator": "0000",
+    "avatar": null,
+    "bot": true
+  },
+  "attachments": [],
+  "embeds": [],
+  "mentions": [],
+  "mention_roles": [],
+  "pinned": false,
+  "mention_everyone": false,
+  "tts": false,
+  "timestamp": "${timestamp}",
+  "edited_timestamp": null,
+  "flags": 0,
+  "components": [],
+  "reactions": []
+}

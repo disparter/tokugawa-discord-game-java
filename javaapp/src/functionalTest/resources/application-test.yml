@@ -1,0 +1,124 @@
+spring:
+  application:
+    name: tokugawa-discord-game-functional-tests
+    
+  profiles:
+    active: test
+    
+  datasource:
+    # Configurações serão sobrescritas pelo Testcontainers
+    url: jdbc:postgresql://localhost:5432/tokugawa_test
+    username: test
+    password: test
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 25
+          order_inserts: true
+          order_updates: true
+        cache:
+          use_second_level_cache: false
+          
+  data:
+    jpa:
+      repositories:
+        enabled: true
+        
+  web:
+    locale: pt_BR
+    resources:
+      add-mappings: false
+      
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+      
+  test:
+    database:
+      replace: none
+
+# Configurações específicas para testes
+discord:
+  token: test-token-for-functional-tests
+  api:
+    base-url: http://localhost:8089
+    timeout: 5000
+  bot:
+    enabled: false
+    
+server:
+  port: 0  # Porta aleatória para testes
+  servlet:
+    context-path: /
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      
+logging:
+  level:
+    io.github.disparter.tokugawa: DEBUG
+    org.springframework.test: INFO
+    org.testcontainers: INFO
+    com.github.tomakehurst.wiremock: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.boot.test: INFO
+    cucumber: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%logger{36}] - %msg%n"
+    
+# Configurações do Testcontainers
+testcontainers:
+  reuse:
+    enable: true
+  ryuk:
+    disabled: false
+    
+# Configurações do WireMock
+wiremock:
+  server:
+    port: 8089
+    files: src/functionalTest/resources/wiremock/__files
+    verbose: true
+    global-response-templating: true
+    
+# Configurações de cache para testes
+cache:
+  caffeine:
+    spec: maximumSize=100,expireAfterWrite=5m
+    
+# Configurações de retry e timeout para testes
+functional-test:
+  timeout:
+    default: 30s
+    long: 60s
+    short: 10s
+  retry:
+    max-attempts: 3
+    delay: 1s
+  wiremock:
+    reset-after-each-test: true
+    verify-requests: true
