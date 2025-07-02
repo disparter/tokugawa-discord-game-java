@@ -1,141 +1,112 @@
 # Security Policy
 
-## 🔒 Supported Versions
+## 🛡️ Supported Versions
 
-We actively support the following versions with security updates:
+We actively maintain and provide security updates for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
-| < 0.1   | :x:                |
+| 1.0.x   | ✅ Yes             |
+| < 1.0   | ❌ No              |
 
 ## 🚨 Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security vulnerability, please follow these steps:
+We take security vulnerabilities seriously. If you discover a security issue, please follow these steps:
 
-### 📧 Private Disclosure
+### 1. **Do NOT** create a public issue
+Security vulnerabilities should not be disclosed publicly until they have been addressed.
 
-**DO NOT** report security vulnerabilities through public GitHub issues, discussions, or pull requests.
+### 2. Contact us privately
+- **Email**: [security@tokugawa-game.com] (if available)
+- **GitHub**: Use the "Report a vulnerability" option in the Security tab
+- **Direct contact**: Reach out to maintainers privately
 
-Instead, please email us directly at:
-- **Email**: security@your-domain.com
-- **Subject**: [SECURITY] Brief description of the vulnerability
+### 3. Provide detailed information
+Include the following in your report:
+- Description of the vulnerability
+- Steps to reproduce the issue
+- Potential impact and severity
+- Any proof-of-concept code (if applicable)
+- Suggested mitigation or fix (if known)
 
-### 📋 What to Include
-
-Please include as much of the following information as possible:
-
-- **Description**: A clear description of the vulnerability
-- **Impact**: What an attacker could achieve by exploiting this vulnerability
-- **Steps to Reproduce**: Detailed steps to reproduce the vulnerability
-- **Proof of Concept**: If applicable, include a proof of concept
-- **Suggested Fix**: If you have ideas on how to fix the issue
-- **Environment**: Java version, PostgreSQL version, OS, etc.
-
-### ⏱️ Response Timeline
-
-We will acknowledge your report within **48 hours** and provide a detailed response within **1 week** indicating:
-
-- Confirmation of the vulnerability
-- Our plan for addressing it
-- Expected timeline for a fix
-- Credit preferences (if you want to be acknowledged)
-
-### 🏆 Security Hall of Fame
-
-We maintain a Security Hall of Fame to recognize researchers who help us maintain the security of our project. If you'd like to be included (with your permission), we'll add you to our acknowledgments.
-
-## 🛡️ Security Measures
+## 🔒 Security Measures
 
 ### Application Security
-
 - **Input Validation**: All user inputs are validated and sanitized
-- **SQL Injection Protection**: Using JPA parameterized queries
-- **Authentication**: Discord OAuth2 integration
-- **Authorization**: Role-based access control
-- **Rate Limiting**: Discord API rate limiting compliance
-- **Error Handling**: Secure error messages without information disclosure
+- **SQL Injection Prevention**: Using JPA/Hibernate with parameterized queries
+- **Authentication**: Secure Discord OAuth2 integration
+- **Authorization**: Role-based access control for game features
+- **Session Management**: Secure token handling and session management
 
 ### Infrastructure Security
-
-- **Database Security**: Encrypted connections, proper user permissions
+- **Database Security**: PostgreSQL with encrypted connections
+- **Docker Security**: Non-root containers with minimal attack surface
 - **Environment Variables**: Sensitive data stored in environment variables
-- **Docker Security**: Minimal base images, non-root user execution
-- **Logging**: Security-relevant events are logged (without sensitive data)
+- **Logging**: Security events logged without exposing sensitive data
 
-### Data Protection
+### Discord Integration Security
+- **Token Protection**: Discord bot tokens securely managed
+- **Rate Limiting**: Proper rate limiting to prevent abuse
+- **Permission Validation**: Strict validation of Discord permissions
+- **Input Sanitization**: All Discord messages sanitized before processing
 
-- **Personal Data**: GDPR-compliant data handling
-- **Data Retention**: Clear data retention policies
-- **Encryption**: Sensitive data encrypted at rest and in transit
-- **Access Control**: Principle of least privilege
+## 🔍 Security Best Practices
 
-## 🔍 Security Best Practices for Contributors
+### For Developers
+- Keep dependencies updated
+- Follow secure coding practices
+- Use static analysis tools
+- Regular security testing
+- Code reviews for security implications
 
-### Code Review
+### For Deployment
+- Use HTTPS/TLS for all communications
+- Regular security updates
+- Monitor for suspicious activities
+- Backup and disaster recovery plans
+- Environment isolation (dev/staging/prod)
 
-- All code changes require review before merging
-- Security-focused code review checklist
-- Automated security scanning in CI/CD pipeline
+## 📋 Security Checklist
 
-### Dependencies
+When contributing code, ensure:
+- [ ] Input validation for all user data
+- [ ] No hardcoded secrets or credentials
+- [ ] Proper error handling without information leakage
+- [ ] Authentication and authorization checks
+- [ ] SQL injection prevention
+- [ ] XSS prevention (if applicable)
+- [ ] Secure logging practices
 
-- Regular dependency updates
-- Vulnerability scanning of dependencies
-- Use of dependency management tools
+## 🚀 Response Timeline
 
-### Development Environment
+We aim to respond to security reports within:
+- **Initial Response**: 24-48 hours
+- **Vulnerability Assessment**: 3-5 business days
+- **Fix Development**: Depends on severity (1-14 days)
+- **Public Disclosure**: After fix is deployed and tested
 
-- Secure development practices
-- Regular security training for contributors
-- Security testing integration
+## 🏆 Recognition
+
+We appreciate security researchers who help us maintain a secure application. Contributors who report valid security vulnerabilities will be:
+- Acknowledged in our security hall of fame (with permission)
+- Credited in release notes (if desired)
+- Invited to test fixes before public release
 
 ## 📚 Security Resources
 
-### For Users
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [Spring Security Documentation](https://spring.io/projects/spring-security)
+- [Discord Developer Documentation](https://discord.com/developers/docs/intro)
+- [Docker Security Best Practices](https://docs.docker.com/engine/security/)
 
-- [Security Best Practices Guide](docs/SECURITY_GUIDE.md)
-- [Safe Configuration Guide](docs/DEPLOYMENT.md#security)
-- [Incident Response Guide](docs/INCIDENT_RESPONSE.md)
+## 🔄 Security Updates
 
-### For Developers
-
-- [Secure Coding Guidelines](docs/DEVELOPMENT_GUIDE.md#security)
-- [Security Testing Guide](docs/TESTING.md#security-testing)
-- [Threat Modeling Documentation](docs/THREAT_MODEL.md)
-
-## 🚫 Out of Scope
-
-The following are generally considered out of scope for security reports:
-
-- **Denial of Service**: Attacks that only cause service unavailability
-- **Social Engineering**: Attacks requiring social interaction
-- **Physical Security**: Physical access to systems
-- **Third-party Services**: Vulnerabilities in Discord, PostgreSQL, etc.
-- **Rate Limiting**: General rate limiting bypass (unless leading to other issues)
-
-## 📞 Contact
-
-For general security questions or concerns that don't involve reporting a vulnerability:
-
-- **Email**: security@your-domain.com
-- **Discord**: Contact a maintainer on our community server
-- **GitHub**: Use GitHub Discussions for general security questions
-
-## 🔄 Policy Updates
-
-This security policy may be updated from time to time. We'll notify the community of significant changes through:
-
-- GitHub releases
-- Community Discord announcements
-- Documentation updates
+Security updates will be:
+- Released as patch versions (e.g., 1.0.1, 1.0.2)
+- Documented in release notes
+- Announced through appropriate channels
+- Applied to all supported versions when possible
 
 ---
 
-## 🙏 Acknowledgments
-
-We thank the following security researchers for their responsible disclosure:
-
-*[Security researchers will be listed here with their permission]*
-
-**Last Updated**: December 2024
+Thank you for helping keep Tokugawa Discord Game secure! 🛡️

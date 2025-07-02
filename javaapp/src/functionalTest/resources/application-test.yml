@@ -1,0 +1,5 @@
+# Configuração simplificada para testes funcionais
+logging:
+  level:
+    io.github.disparter.tokugawa: DEBUG
+    root: WARN

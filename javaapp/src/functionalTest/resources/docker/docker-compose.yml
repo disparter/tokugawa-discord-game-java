@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database para testes
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: tokugawa-postgres-test
+    environment:
+      POSTGRES_DB: tokugawa_test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d tokugawa_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tokugawa-test-network
+
+  # Redis para cache (opcional, se necessário)
+  redis-test:
+    image: redis:7-alpine
+    container_name: tokugawa-redis-test
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - tokugawa-test-network
+
+  # Aplicação Tokugawa (será gerenciada pelos testes)
+  tokugawa-app:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: tokugawa-app-test
+    environment:
+      - SPRING_PROFILES_ACTIVE=test
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-test:5432/tokugawa_test
+      - SPRING_DATASOURCE_USERNAME=test
+      - SPRING_DATASOURCE_PASSWORD=test
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+      - DISCORD_TOKEN=test-token
+      - DISCORD_API_BASE_URL=http://wiremock:8080
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - tokugawa-test-network
+
+  # WireMock para simular APIs externas (será gerenciado pelos testes)
+  wiremock:
+    image: wiremock/wiremock:3.0.1
+    container_name: tokugawa-wiremock-test
+    ports:
+      - "8089:8080"
+    volumes:
+      - ../wiremock:/home/wiremock
+    command: ["--global-response-templating", "--verbose"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/__admin/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - tokugawa-test-network
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+
+networks:
+  tokugawa-test-network:
+    driver: bridge
+    name: tokugawa-test-network

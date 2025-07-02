@@ -1,312 +1,130 @@
 # Contributing to Tokugawa Discord Game
 
-We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:
+Thank you for your interest in contributing to the Tokugawa Discord Game project! This document provides guidelines for contributing to our Spring Boot Discord game implementation.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
-- Becoming a maintainer
+## 🎯 Project Overview
 
-## 🚀 Quick Start for Contributors
+This is a production-ready Spring Boot Discord game featuring:
+- Advanced visual novel gameplay mechanics
+- Database-driven configuration system
+- Reactive Discord integration with Discord4J
+- Comprehensive club/relationship/trading systems
+- Multi-layered caching and performance optimization
+
+## 📋 Development Setup
 
 ### Prerequisites
-
-- Java 21+ JDK
+- Java 17 or higher
+- Maven 3.8+
 - PostgreSQL 13+
+- Docker & Docker Compose (for testing)
 - Git
-- Discord Developer Account
 
-### Development Setup
+### Quick Start
+```bash
+# Clone the repository
+git clone <repository-url>
+cd tokugawa-discord-game
 
-1. **Fork the repository** on GitHub
-2. **Clone your fork** locally:
-   ```bash
-   git clone https://github.com/yourusername/tokugawa-discord-game.git
-   cd tokugawa-discord-game
-   ```
-3. **Set up the development environment**:
-   ```bash
-   # Set up PostgreSQL database
-   createdb tokugawa_game_dev
-   
-   # Configure environment variables
-   export DISCORD_TOKEN=your_test_bot_token
-   export DB_URL=jdbc:postgresql://localhost:5432/tokugawa_game_dev
-   export DB_USERNAME=your_username
-   export DB_PASSWORD=your_password
-   ```
-4. **Build and test**:
-   ```bash
-   cd javaapp
-   ./gradlew build test
-   ```
+# Set up the application
+cd javaapp
+./gradlew build
 
-## 📋 Development Process
+# Run tests
+./gradlew test
+./gradlew functionalTest
+```
 
-We use [GitHub Flow](https://guides.github.com/introduction/flow/index.html), so all code changes happen through pull requests.
+## 🔧 Development Guidelines
 
-### Pull Request Process
+### Code Style
+- Follow Java naming conventions (PascalCase for classes, camelCase for methods)
+- Use Spring annotations consistently (@Service, @Repository, @Entity)
+- Add comprehensive JavaDoc for all public methods
+- Maintain 80% test coverage minimum
 
-1. **Create a branch** from `main`:
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-2. **Make your changes** following our coding standards
-3. **Add tests** for your changes
-4. **Ensure all tests pass**:
-   ```bash
-   ./gradlew test
-   ```
-5. **Update documentation** if needed
-6. **Submit a pull request** with a clear title and description
-
-### Pull Request Guidelines
-
-- **Title**: Use a clear, descriptive title (e.g., "Add romance route configuration system")
-- **Description**: Explain what changes you made and why
-- **Testing**: Include information about how you tested your changes
-- **Documentation**: Update relevant documentation
-- **Breaking Changes**: Clearly mark any breaking changes
-
-## 🎯 Coding Standards
-
-### Java Code Style
-
-- **Package Structure**: Follow `io.github.disparter.tokugawa.discord.{area}`
-- **Naming Conventions**:
-  - Classes: `PascalCase`
-  - Methods/Variables: `camelCase`
-  - Constants: `UPPER_SNAKE_CASE`
-- **Annotations**: Use Spring annotations consistently
-  - `@Service` for business logic
-  - `@Repository` for data access
-  - `@Entity` for JPA entities
-  - `@Component` for Discord commands
+### Architecture Patterns
+- **Service Layer**: All business logic in @Service classes with @Transactional
+- **Repository Pattern**: JPA repositories extending CrudRepository
+- **Command Pattern**: Discord commands implementing SlashCommand interface
+- **Configuration Pattern**: Database-driven config with fallback mechanisms
 
 ### Database Conventions
+- Table names: snake_case (players, romance_route_configs, club_members)
+- Primary keys: Long id with @GeneratedValue(strategy = GenerationType.IDENTITY)
+- Foreign keys: Explicit @JoinColumn annotations
+- Add @Index annotations for frequently queried fields
 
-- **Table Names**: `snake_case` (e.g., `player_progress`, `club_members`)
-- **Column Names**: `snake_case`
-- **Primary Keys**: `id` column with `BIGINT` type
-- **Foreign Keys**: Clear naming (e.g., `player_id`, `club_id`)
+## 🧪 Testing Requirements
 
-### Discord Command Structure
-
-```java
-@Component
-public class ExampleCommand implements SlashCommand {
-    private final ExampleService exampleService;
-    
-    public ExampleCommand(ExampleService exampleService) {
-        this.exampleService = exampleService;
-    }
-    
-    @Override
-    public String getName() {
-        return "example";
-    }
-    
-    @Override
-    public String getDescription() {
-        return "Example command description";
-    }
-    
-    @Override
-    public Mono<Void> execute(ChatInputInteractionEvent event) {
-        return event.deferReply()
-            .then(processCommand(event))
-            .then(event.createFollowup("Command completed"))
-            .then();
-    }
-}
-```
-
-### Service Layer Structure
-
-```java
-@Service
-@Transactional
-@Slf4j
-public class ExampleServiceImpl implements ExampleService {
-    private final ExampleRepository repository;
-    
-    public ExampleServiceImpl(ExampleRepository repository) {
-        this.repository = repository;
-    }
-    
-    @Override
-    public Optional<Example> findById(Long id) {
-        log.debug("Finding example by id: {}", id);
-        return repository.findById(id);
-    }
-}
-```
-
-## 🧪 Testing Guidelines
-
-### Test Structure
-
-- **Unit Tests**: Test individual components in isolation
-- **Integration Tests**: Test component interactions
-- **Repository Tests**: Use `@DataJpaTest`
-- **Service Tests**: Use `@SpringBootTest` with test slices
-
-### Test Naming
-
-```java
-@Test
-void shouldReturnPlayerWhenValidIdProvided() {
-    // Given
-    Long playerId = 1L;
-    
-    // When
-    Optional<Player> result = playerService.findById(playerId);
-    
-    // Then
-    assertThat(result).isPresent();
-}
-```
-
-### Test Coverage
-
+### Unit Tests
+- All service layer methods must have unit tests
+- Use Mockito for mocking dependencies
 - Aim for 80%+ code coverage
-- Focus on critical business logic
-- Test error conditions and edge cases
+
+### Functional Tests
+- BDD scenarios using Cucumber in Portuguese
+- Black-box testing with Testcontainers
+- WireMock for external API simulation
+
+### Integration Tests
+- Database operations testing
+- Discord command interaction testing
+- End-to-end workflow validation
+
+## 📝 Pull Request Process
+
+1. **Fork the repository** and create a feature branch
+2. **Write tests** for your changes (unit + functional)
+3. **Follow coding standards** and architecture patterns
+4. **Update documentation** if needed
+5. **Submit PR** with clear description of changes
+
+### PR Requirements
+- [ ] All tests pass (unit + functional + integration)
+- [ ] Code coverage maintained above 80%
+- [ ] No linting errors
+- [ ] Documentation updated if applicable
+- [ ] Follows established architecture patterns
 
 ## 🐛 Bug Reports
 
-Great bug reports tend to have:
-
-- **Clear title** that summarizes the issue
-- **Steps to reproduce** the bug
-- **Expected behavior** vs actual behavior
-- **Environment information** (Java version, database, etc.)
-- **Logs or error messages**
-- **Screenshots** for UI-related issues
-
-**Template:**
-
-```markdown
-## Bug Description
-A clear description of what the bug is.
-
-## Steps to Reproduce
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-## Expected Behavior
-What you expected to happen.
-
-## Actual Behavior
-What actually happened.
-
-## Environment
-- Java Version: [e.g. 21]
-- PostgreSQL Version: [e.g. 13.3]
-- OS: [e.g. Ubuntu 20.04]
-
-## Additional Context
-Add any other context or screenshots.
-```
+When reporting bugs, please include:
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details (Java version, OS, etc.)
+- Relevant logs/stack traces
 
 ## 💡 Feature Requests
 
-We love feature requests! Please provide:
+For new features:
+- Check existing issues/discussions first
+- Provide clear use case and benefits
+- Consider impact on existing systems
+- Discuss architecture implications
 
-- **Clear description** of the feature
-- **Use case**: Why is this feature needed?
-- **Proposed solution**: How should it work?
-- **Alternatives**: Any alternative solutions considered?
+## 📚 Documentation
 
-## 📚 Documentation Contributions
+All documentation should be placed in the `docs/` directory:
+- Technical documentation in `docs/`
+- API references in `docs/API_REFERENCE.md`
+- Architecture details in `docs/ARCHITECTURE.md`
+- Development guides in `docs/DEVELOPMENT_GUIDE.md`
 
-Documentation improvements are always welcome:
+## 🤝 Code of Conduct
 
-- **API Documentation**: Update JavaDoc comments
-- **User Guides**: Improve setup and usage instructions
-- **Architecture Docs**: Keep architecture documentation current
-- **Examples**: Add code examples and tutorials
+- Be respectful and inclusive
+- Focus on constructive feedback
+- Help newcomers learn the codebase
+- Maintain professional communication
 
-## 🔒 Security Issues
+## 📧 Contact
 
-**Do NOT report security vulnerabilities through public GitHub issues.**
-
-Instead, email us at: security@your-domain.com
-
-We'll respond within 48 hours and work with you to resolve the issue.
-
-## 📝 Commit Message Guidelines
-
-Use conventional commit format:
-
-```
-type(scope): description
-
-[optional body]
-
-[optional footer]
-```
-
-**Types:**
-- `feat`: New feature
-- `fix`: Bug fix  
-- `docs`: Documentation changes
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Adding tests
-- `chore`: Maintenance tasks
-
-**Examples:**
-```
-feat(player): add achievement tracking system
-fix(trading): resolve NPC preference calculation bug
-docs(readme): update installation instructions
-```
-
-## 🏷️ Issue and PR Labels
-
-### Issue Labels
-
-- `bug`: Something isn't working
-- `enhancement`: New feature or request
-- `documentation`: Improvements to documentation
-- `good first issue`: Good for newcomers
-- `help wanted`: Extra attention is needed
-- `question`: Further information is requested
-
-### PR Labels
-
-- `work in progress`: PR is not ready for review
-- `ready for review`: PR is ready for review
-- `needs changes`: PR needs changes before merge
-- `approved`: PR has been approved
-
-## 🎖️ Recognition
-
-Contributors will be recognized in:
-
-- **README.md**: Listed in acknowledgments
-- **Release Notes**: Mentioned in changelog
-- **Hall of Fame**: Special recognition for major contributions
-
-## 📞 Getting Help
-
-- **Documentation**: Check our [docs](docs/) first
-- **Discussions**: Use GitHub Discussions for questions
-- **Discord**: Join our community server
-- **Issues**: Create an issue for bugs or feature requests
-
-## 📄 License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.
+For questions or discussions:
+- Open an issue for technical questions
+- Use discussions for general questions
+- Contact maintainers for security issues
 
 ---
 
-## 🙏 Thank You
-
-Thank you for considering contributing to Tokugawa Discord Game! Your contributions make this project better for everyone.
-
-**Happy Coding!** 🎮
+Thank you for contributing to Tokugawa Discord Game! 🎮

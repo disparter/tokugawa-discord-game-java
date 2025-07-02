@@ -1,0 +1,18 @@
+{
+  "id": "${userId}",
+  "username": "${username}",
+  "discriminator": "${discriminator}",
+  "global_name": "${username}",
+  "avatar": "${avatar}",
+  "bot": false,
+  "system": false,
+  "mfa_enabled": true,
+  "banner": null,
+  "accent_color": 5793266,
+  "locale": "en-US",
+  "verified": true,
+  "email": "user@example.com",
+  "flags": 0,
+  "premium_type": 0,
+  "public_flags": 0
+}
