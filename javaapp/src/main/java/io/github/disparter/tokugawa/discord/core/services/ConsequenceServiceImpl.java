@@ -180,7 +180,7 @@ public class ConsequenceServiceImpl implements ConsequenceService {
                     break;
                 case "experience":
                     int experienceChange = Integer.parseInt(parts[1]);
-                    player.setExperience(player.getExperience() + experienceChange);
+                    player.setExp(player.getExp() + experienceChange);
                     break;
                 case "level":
                     int levelChange = Integer.parseInt(parts[1]);
