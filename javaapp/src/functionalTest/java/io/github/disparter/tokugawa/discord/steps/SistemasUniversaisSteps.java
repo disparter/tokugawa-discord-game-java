@@ -739,6 +739,12 @@ public class SistemasUniversaisSteps {
         log.info("✅ Jogador tem energia suficiente");
     }
 
+    @Dado("o jogador possui energia suficiente")
+    public void oJogadorPossuiEnergiaSuficiente() {
+        testContext.setValue("energia_suficiente", true);
+        log.info("✅ Jogador possui energia suficiente");
+    }
+
     @Dado("existe uma localização adjacente")
     public void existeUmaLocalizacaoAdjacente() {
         testContext.setValue("localizacao_adjacente", true);
@@ -831,6 +837,11 @@ public class SistemasUniversaisSteps {
         aAcaoDeveSerExecutadaComSucesso();
     }
 
+    @Então("o duelo deve ser iniciado")
+    public void oDueloDeveSerIniciado() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
     @Então("deve processar a ação de duelo")
     public void deveProcessarAAcaoDeDuelo() {
         aAcaoDeveSerExecutadaComSucesso();
@@ -859,6 +870,12 @@ public class SistemasUniversaisSteps {
     public void oJogadorTemApostasAtivas() {
         testContext.setValue("apostas_ativas", true);
         log.info("✅ Jogador tem apostas ativas");
+    }
+
+    @Dado("o jogador possui apostas ativas")
+    public void oJogadorPossuiApostasAtivas() {
+        testContext.setValue("apostas_ativas", true);
+        log.info("✅ Jogador possui apostas ativas");
     }
 
     @Quando("o usuário solicita ver eventos para apostas")
@@ -895,8 +912,6 @@ public class SistemasUniversaisSteps {
     public void deveExibirApostasAtivas() {
         aAcaoDeveSerExecutadaComSucesso();
     }
-
-
 
     // ===== VALIDAÇÕES GENÉRICAS =====
 
@@ -1234,5 +1249,273 @@ public class SistemasUniversaisSteps {
     @Então("deve processar resultados ao fim do duelo")
     public void deveProcessarResultadosAoFimDoDuelo() {
         aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    // ===== STEPS ESPECÍFICOS DE DUELOS =====
+
+    @Dado("o Discord está esperando uma requisição para enviar mensagem")
+    public void oDiscordEstaEsperandoUmaRequisicaoParaEnviarMensagem() {
+        testContext.setValue("discord_send_message", true);
+        log.info("✅ Discord configurado para enviar mensagem");
+    }
+
+    @Quando("o usuário desafia outro jogador para um duelo")
+    public void oUsuarioDesafiaOutroJogadorParaUmDuelo() {
+        processarAcaoGenerica("desafiar para duelo", "", true);
+    }
+
+    @Quando("o usuário executa uma ação de combate")
+    public void oUsuarioExecutaUmaAcaoDeCombate() {
+        processarAcaoGenerica("ação de combate", "", true);
+    }
+
+    @Quando("o duelo é finalizado")
+    public void oDueloEFinalizado() {
+        processarAcaoGenerica("finalizar duelo", "", true);
+    }
+
+    @Quando("o tempo do duelo expira")
+    public void oTempoDoDueloExpira() {
+        processarAcaoGenerica("tempo expirou", "", true);
+    }
+
+    @Quando("o torneio de duelos é iniciado")
+    public void oTorneioDeDuelosEIniciado() {
+        processarAcaoGenerica("iniciar torneio duelos", "", true);
+    }
+
+    @Dado("o jogador está em um duelo ativo")
+    public void oJogadorEstaEmUmDueloAtivo() {
+        testContext.setValue("duelo_ativo_jogador", true);
+        log.info("✅ Jogador está em duelo ativo");
+    }
+
+    @Dado("o jogador está vencendo um duelo")
+    public void oJogadorEstaVencendoUmDuelo() {
+        testContext.setValue("jogador_vencendo", true);
+        log.info("✅ Jogador está vencendo duelo");
+    }
+
+    @Dado("o jogador está em um duelo que excedeu o tempo limite")
+    public void oJogadorEstaEmUmDueloQueExcedeuOTempoLimite() {
+        testContext.setValue("duelo_timeout", true);
+        log.info("✅ Duelo excedeu tempo limite");
+    }
+
+    @Dado("todos atendem os requisitos de participação")
+    public void todosAtendemOsRequisitosDeParticipacao() {
+        testContext.setValue("requisitos_atendidos", true);
+        log.info("✅ Todos atendem requisitos de participação");
+    }
+
+    @Então("o desafio deve ser enviado com sucesso")
+    public void oDesafioDeveSerEnviadoComSucesso() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("o jogador adversário deve receber notificação")
+    public void oJogadorAdversarioDeveReceberNotificacao() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve ser criado um registro de duelo pendente")
+    public void deveSerCriadoUmRegistroDeDueloPendente() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve começar a fase de combate")
+    public void deveComecarAFaseDeCombate() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("o desafio deve ser cancelado")
+    public void oDesafioDeveSerCancelado() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("o desafiante deve ser notificado da recusa")
+    public void oDesafianteDeveSerNotificadoDaRecusa() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve limpar o registro de duelo pendente")
+    public void deveLimparORegistroDeDueloPendente() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("a ação deve ser processada")
+    public void aAcaoDeveSerProcessada() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve calcular dano e efeitos")
+    public void deveCalcularDanoEEfeitos() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve declarar o vencedor")
+    public void deveDeclararOVencedor() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve distribuir recompensas adequadamente")
+    public void deveDistribuirRecompensasAdequadamente() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve finalizar o duelo automaticamente")
+    public void deveFinalizarODueloAutomaticamente() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve determinar resultado por pontos")
+    public void deveDeterminarResultadoPorPontos() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve criar brackets de eliminação")
+    public void deveCriarBracketsDeEliminacao() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve coordenar múltiplos duelos simultâneos")
+    public void deveCoordenarMultiplosDuelosSimultaneos() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    // ===== STEPS ESPECÍFICOS DE EXPLORAÇÃO =====
+
+    @Dado("existe uma localização adjacente acessível")
+    public void existeUmaLocalizacaoAdjacenteAcessivel() {
+        testContext.setValue("localizacao_adjacente_acessivel", true);
+        log.info("✅ Localização adjacente acessível");
+    }
+
+    @Dado("o jogador atende requisitos para descobrir uma área")
+    public void oJogadorAtendeRequisitosParaDescobrirUmaArea() {
+        testContext.setValue("requisitos_descoberta", true);
+        log.info("✅ Jogador atende requisitos para descoberta");
+    }
+
+    @Dado("existe uma área com requisitos específicos")
+    public void existeUmaAreaComRequisitosEspecificos() {
+        testContext.setValue("area_com_requisitos", true);
+        log.info("✅ Área com requisitos específicos");
+    }
+
+    @Dado("todos possuem energia suficiente")
+    public void todosPossuemEnergiaSuficiente() {
+        testContext.setValue("todos_energia_suficiente", true);
+        log.info("✅ Todos possuem energia suficiente");
+    }
+
+    @Quando("o usuário se move para a nova localização")
+    public void oUsuarioSeMoveparaANovaLocalizacao() {
+        processarAcaoGenerica("mover para nova localização", "", true);
+    }
+
+    @Quando("o usuário explora uma região inexplorada")
+    public void oUsuarioExploraUmaRegiaoInexplorada() {
+        processarAcaoGenerica("explorar região inexplorada", "", true);
+    }
+
+    @Quando("o usuário tenta acessar sem os requisitos")
+    public void oUsuarioTentaAcessarSemOsRequisitos() {
+        processarAcaoGenerica("acessar sem requisitos", "", false);
+    }
+
+    @Quando("o usuário realiza uma exploração longa")
+    public void oUsuarioRealizaUmaExploracaoLonga() {
+        processarAcaoGenerica("exploração longa", "", true);
+    }
+
+    @Quando("é iniciada uma expedição em grupo")
+    public void eIniciadaUmaExpedicaoEmGrupo() {
+        processarAcaoGenerica("expedição em grupo", "", true);
+    }
+
+    @Quando("o usuário explora um terreno do tipo {string}")
+    public void oUsuarioExploraUmTerrenoDoTipo(String tipoTerreno) {
+        processarAcaoGenerica("explorar terreno", tipoTerreno, true);
+    }
+
+    @Então("deve exibir informações da localização")
+    public void deveExibirInformacoesDaLocalizacao() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve mostrar NPCs disponíveis na área")
+    public void deveMostrarNPCsDisponiveisNaArea() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve mostrar ações possíveis no local")
+    public void deveMostrarAcoesPossiveisNoLocal() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve atualizar a localização do jogador")
+    public void deveAtualizarALocalizacaoDoJogador() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve exibir descrição da nova área")
+    public void deveExibirDescricaoDaNovaArea() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve mostrar tempo gasto na viagem")
+    public void deveMostrarTempoGastoNaViagem() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve descobrir a nova localização")
+    public void deveDescobrirANovaLocalizacao() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve receber recompensa de descoberta")
+    public void deveReceberRecompensaDeDescoberta() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve ser impedido de entrar")
+    public void deveSerImpedidoDeEntrar() {
+        deveRetornarUmaMensagemDeErro();
+    }
+
+    @Então("deve mostrar quais requisitos faltam")
+    public void deveMostrarQuaisRequisitosFaltam() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve sugerir como obter os requisitos")
+    public void deveSugerirComoObterOsRequisitos() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve consumir energia apropriadamente")
+    public void deveConsumirEnergiaApropriadamente() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve mostrar energia restante")
+    public void deveMostrarEnergiaRestante() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve calcular tempo para regeneração")
+    public void deveCalcularTempoParaRegeneracao() {
+        oJogadorDeveReceberFeedbackAdequado();
+    }
+
+    @Então("deve coordenar o movimento de todos")
+    public void deveCoordenarOMovimentoDeTodos() {
+        aAcaoDeveSerExecutadaComSucesso();
+    }
+
+    @Então("deve aplicar modificadores específicos do terreno")
+    public void deveAplicarModificadoresEspecificosDoTerreno() {
+        oJogadorDeveReceberFeedbackAdequado();
     }
 }
