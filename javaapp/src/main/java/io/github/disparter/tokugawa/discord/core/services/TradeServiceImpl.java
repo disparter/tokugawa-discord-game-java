@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 
 /**
  * Implementation of the TradeService interface.
@@ -161,8 +161,11 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public List<NPC> getTradingNPCsAtLocation(Long locationId) {
-        // TODO: Implement proper location-based NPC filtering when location system is implemented
-        // For now, return all trading NPCs
+        // TODO: Implement location-based NPC filtering
+        // 1. Add locationId field to NPC entity
+        // 2. Create NPCRepository.findByLocationIdAndIsTraderTrue(Long locationId) method
+        // 3. Filter NPCs by location and trader status
+        // For now, return all trading NPCs as placeholder
         return getTradingNPCs();
     }
 
@@ -326,18 +329,7 @@ public class TradeServiceImpl implements TradeService {
         return (int) (baseCost * multiplier);
     }
 
-    /**
-     * Check if an NPC is a trader.
-     *
-     * @param npc the NPC
-     * @return true if the NPC is a trader, false otherwise
-     */
-    private boolean isNPCTrader(NPC npc) {
-        // In a real implementation, this would be based on a "trader" flag
-        // For now, we'll use a simple approach where certain NPC types are traders
-        NPC.NPCType npcType = npc.getType();
-        return npcType != null && (
-            npcType == NPC.NPCType.FACULTY // Assuming FACULTY can be traders
-        );
-    }
+    // TODO: Implement proper trader flag system in NPC entity
+    // Add a boolean "isTrader" field to the NPC entity and use it to filter trading NPCs
+    // This would replace the current logic that assumes all NPCs can trade
 }

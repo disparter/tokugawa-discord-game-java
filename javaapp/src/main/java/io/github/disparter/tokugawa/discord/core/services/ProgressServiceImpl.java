@@ -38,7 +38,6 @@ public class ProgressServiceImpl implements ProgressService {
 
     @Override
     public Progress findById(Long id) {
-        // Placeholder implementation
         return progressRepository.findById(id).orElse(null);
     }
 
@@ -186,7 +185,6 @@ public class ProgressServiceImpl implements ProgressService {
 
     @Override
     public Progress save(Progress progress) {
-        // Placeholder implementation
         return progressRepository.save(progress);
     }
 

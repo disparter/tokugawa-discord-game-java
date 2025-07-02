@@ -252,14 +252,18 @@ public class EventsManager {
             
             // Weekly events
             Map<String, Object> weeklyInfo = new HashMap<>();
-            weeklyInfo.put("tournament", "No tournament running"); // Placeholder
+            // TODO: Implement WeeklyEvents.getCurrentTournamentInfo() method
+            // This should return current tournament name, participants, and end time
+            weeklyInfo.put("tournament", "No tournament running");
             weeklyInfo.put("participants", 0);
             weeklyInfo.put("end_time", null);
             events.put("weekly", weeklyInfo);
             
             // Special events
             Map<String, Object> specialInfo = new HashMap<>();
-            specialInfo.put("event", "No special event running"); // Placeholder
+            // TODO: Implement SpecialEvents.getCurrentEventInfo() method
+            // This should return current special event name, participants, and end time
+            specialInfo.put("event", "No special event running");
             specialInfo.put("participants", 0);
             specialInfo.put("end_time", null);
             events.put("special", specialInfo);

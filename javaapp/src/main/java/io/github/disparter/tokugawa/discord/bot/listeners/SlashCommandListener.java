@@ -2,6 +2,7 @@ package io.github.disparter.tokugawa.discord.bot.listeners;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import io.github.disparter.tokugawa.discord.bot.commands.SlashCommand;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
  * This class registers all available commands and dispatches incoming slash commands to the appropriate handler.
  */
 @Component
+@Slf4j
 public class SlashCommandListener {
 
     private final Map<String, SlashCommand> commands;
@@ -32,7 +34,7 @@ public class SlashCommandListener {
                         Function.identity()
                 ));
 
-        System.out.println("Registered slash commands: " + commands.keySet());
+        log.info("Registered slash commands: {}", commands.keySet());
     }
 
     /**
@@ -48,8 +50,7 @@ public class SlashCommandListener {
         return Mono.justOrEmpty(commands.get(commandName))
                 .flatMap(command -> command.execute(event))
                 .onErrorResume(error -> {
-                    System.err.println("Error executing command '" + commandName + "': " + error.getMessage());
-                    error.printStackTrace();
+                    log.error("Error executing command '{}': {}", commandName, error.getMessage(), error);
 
                     return event.reply()
                             .withContent("Ocorreu um erro ao executar o comando. Por favor, tente novamente mais tarde.")

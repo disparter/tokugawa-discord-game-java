@@ -4,11 +4,9 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import io.github.disparter.tokugawa.discord.bot.listeners.SlashCommandListener;
-import io.github.disparter.tokugawa.discord.core.events.EventsManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -25,11 +23,9 @@ public class DiscordBot {
 
     private GatewayDiscordClient gatewayClient;
     private final SlashCommandListener slashCommandListener;
-    private final EventsManager eventsManager;
 
-    public DiscordBot(SlashCommandListener slashCommandListener, EventsManager eventsManager) {
+    public DiscordBot(SlashCommandListener slashCommandListener) {
         this.slashCommandListener = slashCommandListener;
-        this.eventsManager = eventsManager;
     }
 
     /**

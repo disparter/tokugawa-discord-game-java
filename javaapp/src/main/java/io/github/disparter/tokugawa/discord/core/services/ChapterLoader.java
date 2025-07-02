@@ -353,13 +353,8 @@ public class ChapterLoader {
                             }
                         }
                     }
-                } else if (requirementStr.startsWith("chapter:")) {
-                    // Legacy format: "chapter:chapter_id"
-                    String requiredChapter = requirementStr.substring("chapter:".length());
-                    if (!completedChapters.contains(requiredChapter)) {
-                        return false;
-                    }
                 }
+                // Legacy format support has been removed - all data should use JSON format
             }
 
             return true;
