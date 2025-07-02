@@ -8,8 +8,7 @@ import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.util.Color;
 import io.github.disparter.tokugawa.discord.bot.DiscordBot;
 import io.github.disparter.tokugawa.discord.core.services.PlayerService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+
 import reactor.core.publisher.Mono;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
