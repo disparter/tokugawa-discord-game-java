@@ -3,10 +3,13 @@ package io.github.disparter.tokugawa.discord.steps;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.cucumber.spring.CucumberContextConfiguration;
+import io.github.disparter.tokugawa.discord.config.FunctionalTestApplication;
 import io.github.disparter.tokugawa.discord.context.TestContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 
@@ -15,6 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Steps de definição para cenários de autenticação e gestão de usuários.
  */
+@CucumberContextConfiguration
+@SpringBootTest(classes = FunctionalTestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @RequiredArgsConstructor
 @Slf4j
 public class AutenticacaoSteps {

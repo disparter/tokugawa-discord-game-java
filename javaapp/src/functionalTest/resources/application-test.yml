@@ -6,22 +6,17 @@ spring:
     active: test
     
   datasource:
-    # Configurações serão sobrescritas pelo Testcontainers
-    url: jdbc:postgresql://localhost:5432/tokugawa_test
-    username: test
-    password: test
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 5
-      minimum-idle: 1
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+    
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+    defer-datasource-initialization: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -65,28 +60,20 @@ discord:
     enabled: false
     
 server:
-  port: 0  # Porta aleatória para testes
+  port: 0  # porta aleatória para evitar conflitos
   servlet:
     context-path: /
     
 management:
   endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: always
-      
+    enabled-by-default: false
+    
 logging:
   level:
+    org.springframework: WARN
     io.github.disparter.tokugawa: DEBUG
-    org.springframework.test: INFO
-    org.testcontainers: INFO
-    com.github.tomakehurst.wiremock: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.boot.test: INFO
-    cucumber: INFO
+    org.testcontainers: WARN
+    com.github.tomakehurst.wiremock: WARN
   pattern:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%logger{36}] - %msg%n"
     
@@ -122,3 +109,11 @@ functional-test:
   wiremock:
     reset-after-each-test: true
     verify-requests: true
+
+h2:
+  console:
+    enabled: false
+    
+sql:
+  init:
+    mode: never

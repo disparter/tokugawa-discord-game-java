@@ -56,8 +56,10 @@ dependencies {
     functionalTestImplementation 'org.testcontainers:postgresql:1.19.3'
     functionalTestImplementation 'com.github.tomakehurst:wiremock-standalone:3.0.1'
     functionalTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    functionalTestImplementation 'org.springframework.boot:spring-boot-starter-web'
     functionalTestImplementation 'org.awaitility:awaitility:4.2.0'
     functionalTestImplementation 'com.google.code.gson:gson:2.10.1'
+    functionalTestImplementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
     functionalTestCompileOnly 'org.projectlombok:lombok'
     functionalTestAnnotationProcessor 'org.projectlombok:lombok'
 }
@@ -109,6 +111,11 @@ task functionalTest(type: Test) {
     classpath = sourceSets.functionalTest.runtimeClasspath
     useJUnitPlatform()
     shouldRunAfter test
+}
+
+// Configuração para lidar com arquivos duplicados
+tasks.withType(Copy) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 // These tasks can be run manually when needed

@@ -2,8 +2,8 @@ package io.github.disparter.tokugawa.discord.context;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +14,7 @@ import java.util.Optional;
  * Mantém estado e dados temporários necessários durante a execução dos testes funcionais.
  */
 @Component
-@RequestScope
+@Scope("prototype")
 @Data
 @Slf4j
 public class TestContext {
@@ -127,5 +127,91 @@ public class TestContext {
         setValue("current_channel_id", channelId);
         setValue("current_guild_id", guildId);
         log.debug("Discord data set - ChannelId: {}, GuildId: {}", channelId, guildId);
+    }
+
+    // ===== MÉTODOS HTTP =====
+    
+    /**
+     * Define o código de status HTTP da última resposta
+     */
+    public void setLastHttpStatusCode(int statusCode) {
+        this.lastHttpStatusCode = statusCode;
+        setValue("last_http_status_code", statusCode);
+        log.debug("HTTP Status Code set: {}", statusCode);
+    }
+
+    /**
+     * Obtém o código de status HTTP da última resposta
+     */
+    public int getLastHttpStatusCode() {
+        return this.lastHttpStatusCode;
+    }
+
+    /**
+     * Define o corpo da última resposta HTTP
+     */
+    public void setLastHttpResponse(String response) {
+        this.lastHttpResponse = response;
+        setValue("last_http_response", response);
+        log.debug("HTTP Response set: {}", response != null ? response.substring(0, Math.min(response.length(), 100)) + "..." : "null");
+    }
+
+    /**
+     * Obtém o corpo da última resposta HTTP
+     */
+    public String getLastHttpResponse() {
+        return this.lastHttpResponse != null ? this.lastHttpResponse : "";
+    }
+
+    // ===== MÉTODOS DE AUTENTICAÇÃO =====
+    
+    /**
+     * Define o token de autenticação
+     */
+    public void setAuthToken(String token) {
+        this.authToken = token;
+        setValue("auth_token", token);
+        log.debug("Auth token set: {}", token != null ? "***TOKEN***" : "null");
+    }
+
+    /**
+     * Obtém o token de autenticação
+     */
+    public String getAuthToken() {
+        return this.authToken;
+    }
+
+    // ===== MÉTODOS DISCORD =====
+    
+    /**
+     * Define o ID do canal atual do Discord
+     */
+    public void setCurrentChannelId(String channelId) {
+        this.currentChannelId = channelId;
+        setValue("current_channel_id", channelId);
+        log.debug("Current Channel ID set: {}", channelId);
+    }
+
+    /**
+     * Obtém o ID do canal atual do Discord
+     */
+    public String getCurrentChannelId() {
+        return this.currentChannelId;
+    }
+
+    /**
+     * Define o ID da guild atual do Discord
+     */
+    public void setCurrentGuildId(String guildId) {
+        this.currentGuildId = guildId;
+        setValue("current_guild_id", guildId);
+        log.debug("Current Guild ID set: {}", guildId);
+    }
+
+    /**
+     * Obtém o ID da guild atual do Discord
+     */
+    public String getCurrentGuildId() {
+        return this.currentGuildId;
     }
 }
