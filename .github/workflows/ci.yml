@@ -168,15 +168,8 @@ jobs:
             echo "5. Check for missing test dependencies in build.gradle" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Generate Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()
-        with:
-          name: Test Results
-          path: |
-            javaapp/build/test-results/test/*.xml
-            javaapp/build/test-results/functionalTest/*.xml
-          reporter: java-junit
+      # Test report generation via dorny/test-reporter removed
+      # Artifacts upload provides complete test results access
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -198,17 +191,8 @@ jobs:
             javaapp/build/jacocoHtml/
           retention-days: 7
 
-      - name: Comment Test Results on PR
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: github.event_name == 'pull_request'
-        with:
-          files: |
-            javaapp/build/test-results/test/*.xml
-            javaapp/build/test-results/functionalTest/*.xml
-          comment_mode: create new
-          check_name: "Test Results"
-          report_individual_runs: true
-          dedupe_classes_by_file_name: false
+      # PR test result comments removed - artifacts provide complete access
+      # Team can download test-results.zip from Actions artifacts for detailed analysis
 
       - name: Build Application JAR
         if: success()
