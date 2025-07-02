@@ -1,0 +1,131 @@
+name: 🐛 Bug Report
+description: File a bug report to help us improve
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! 🙏
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: 🐛 Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: 🔄 Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: ✅ Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: Tell us what should happen!
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: ❌ Actual Behavior
+      description: A clear and concise description of what actually happened.
+      placeholder: Tell us what happened instead!
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Logs
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+
+  - type: dropdown
+    id: java-version
+    attributes:
+      label: ☕ Java Version
+      description: What version of Java are you running?
+      options:
+        - Java 21
+        - Java 17
+        - Java 11
+        - Other (please specify in additional context)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 💻 Operating System
+      description: What operating system are you using?
+      options:
+        - Windows
+        - macOS
+        - Linux (Ubuntu)
+        - Linux (Debian)
+        - Linux (CentOS/RHEL)
+        - Linux (Other)
+        - Other (please specify in additional context)
+    validations:
+      required: true
+
+  - type: input
+    id: postgresql-version
+    attributes:
+      label: 🐘 PostgreSQL Version
+      description: What version of PostgreSQL are you using?
+      placeholder: e.g., 13.3, 14.2, 15.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment-method
+    attributes:
+      label: 🚀 Deployment Method
+      description: How are you running the application?
+      options:
+        - Local development (gradlew bootRun)
+        - Docker
+        - Docker Compose
+        - Kubernetes
+        - Cloud deployment
+        - Other (please specify in additional context)
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📝 Additional Context
+      description: Add any other context about the problem here, including screenshots if applicable.
+      placeholder: Any additional information that might help us debug this issue.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 📋 Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to avoid creating duplicates
+          required: true
+        - label: I have provided all the requested information
+          required: true
+        - label: I have tested this with the latest version
+          required: true

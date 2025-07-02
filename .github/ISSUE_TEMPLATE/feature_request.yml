@@ -1,0 +1,122 @@
+name: 💡 Feature Request
+description: Suggest an idea for this project
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! 💡 We appreciate your input in making this project better.
+
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: 🎯 Problem Statement
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution-description
+    attributes:
+      label: 💡 Proposed Solution
+      description: Describe the solution you'd like
+      placeholder: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternatives Considered
+      description: Describe alternatives you've considered
+      placeholder: A clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: feature-category
+    attributes:
+      label: 🏷️ Feature Category
+      description: What category does this feature belong to?
+      options:
+        - Player Systems (progression, stats, achievements)
+        - Trading & Economy
+        - Club Management
+        - Romance & Relationships
+        - Location & Exploration
+        - Discord Bot Commands
+        - Database & Performance
+        - API & Integration
+        - Documentation
+        - Testing & Quality
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: ⚡ Priority Level
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would be useful
+        - High - Important for my use case
+        - Critical - Blocking my usage
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: 🎮 Use Case
+      description: Describe your specific use case for this feature
+      placeholder: Explain how you would use this feature and why it would be valuable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation-ideas
+    attributes:
+      label: 🔧 Implementation Ideas
+      description: Do you have any ideas on how this could be implemented?
+      placeholder: Technical suggestions (optional) - API endpoints, database changes, Discord commands, etc.
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: 📋 Examples
+      description: Provide examples of similar features in other projects or mockups
+      placeholder: Links to similar implementations, mockups, or detailed examples
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 🤝 Contribution
+      description: Are you willing to contribute to this feature?
+      options:
+        - label: I'm willing to implement this feature myself
+        - label: I can help with testing
+        - label: I can provide additional requirements/feedback
+        - label: I can help with documentation
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 📋 Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to avoid creating duplicates
+          required: true
+        - label: I have provided a clear use case for this feature
+          required: true
+        - label: This feature aligns with the project's goals and scope
+          required: true
