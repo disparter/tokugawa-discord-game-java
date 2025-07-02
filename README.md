@@ -1,5 +1,12 @@
 # Tokugawa Discord Game ✅ **PRODUCTION READY**
 
+[![CI/CD Pipeline](https://github.com/disparter/tokugawa-discord-game-java/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/disparter/tokugawa-discord-game-java/actions/workflows/ci.yml)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/disparter/tokugawa-discord-game-java/ci.yml?branch=master&label=build)](https://github.com/disparter/tokugawa-discord-game-java/actions)
+[![Version](https://img.shields.io/github/v/tag/disparter/tokugawa-discord-game-java?label=version&color=blue)](https://github.com/disparter/tokugawa-discord-game-java/tags)
+[![License](https://img.shields.io/github/license/disparter/tokugawa-discord-game-java?color=green)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-21+-orange?logo=openjdk)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2+-brightgreen?logo=spring)](https://spring.io/projects/spring-boot)
+
 **Status**: 🎯 **100% Complete** | **All TODOs Resolved** | **Ready for Deployment**
 
 A comprehensive Discord bot for an immersive Tokugawa-era gaming experience, featuring advanced gameplay mechanics, database-driven configuration, and enterprise-grade architecture.
@@ -9,6 +16,12 @@ A comprehensive Discord bot for an immersive Tokugawa-era gaming experience, fea
 **✅ READY FOR PRODUCTION DEPLOYMENT**
 
 All identified TODOs and implementation gaps have been **successfully completed** with comprehensive, production-ready solutions.
+
+### **🔄 Continuous Integration**
+- ✅ **Automated Testing**: Unit tests + 158 functional test scenarios
+- ✅ **Build Pipeline**: Automated builds on every commit
+- ✅ **Quality Gates**: Code coverage and security scanning
+- ✅ **Artifact Generation**: Ready-to-deploy JAR files
 
 ## 🎯 **PROJECT COMPLETION HIGHLIGHTS**
 
