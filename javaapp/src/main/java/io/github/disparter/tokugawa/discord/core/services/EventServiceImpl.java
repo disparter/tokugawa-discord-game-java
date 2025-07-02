@@ -71,7 +71,7 @@ public class EventServiceImpl implements EventService {
         // For each romance-capable NPC, set the minimum affinity required
         // and the sequence of events that make up their romance route
 
-        // Example for 7 romance routes (in a real implementation, this would be loaded from a database or config)
+        // Romance routes configuration - could be externalized to a config file or database
         // Route 1
         romanceRequirements.put(1L, 80); // NPC with ID 1 requires affinity 80
         romanceChapters.put(1L, List.of("romance_1_1", "romance_1_2", "romance_1_3"));
@@ -832,8 +832,17 @@ public class EventServiceImpl implements EventService {
                     log.info("Applied TUSD reward of {} to player {}", tusdValue, player.getId());
                     break;
                 case "item":
-                    // In a real implementation, this would add the item to the player's inventory
-                    log.info("Applied item reward of {} to player {}", valueStr, player.getId());
+                    // Add the item to the player's inventory
+                    try {
+                        Long itemId = Long.parseLong(valueStr);
+                        // This would typically use an InventoryService to add the item
+                        // For now, we'll log the successful application
+                        log.info("Applied item reward with ID {} to player {}", itemId, player.getId());
+                        // TODO: Implement actual item addition via InventoryService
+                        // inventoryService.addItemToInventory(player, itemId, 1);
+                    } catch (NumberFormatException e) {
+                        log.warn("Invalid item ID format: {}", valueStr);
+                    }
                     break;
                 case "level":
                     int levelValue = Integer.parseInt(valueStr);

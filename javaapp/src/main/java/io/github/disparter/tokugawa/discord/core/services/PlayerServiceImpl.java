@@ -36,16 +36,39 @@ public class PlayerServiceImpl implements PlayerService {
 
     /**
      * Initialize the map of decision IDs to reputation changes.
-     * In a real implementation, this would be loaded from a database or config.
+     * This could be externalized to a configuration file or loaded from a database.
      */
     private void initializeDecisionReputationChanges() {
-        // Example decision reputation changes
+        // Positive moral decisions
         decisionReputationChanges.put("help_elderly", 15);
         decisionReputationChanges.put("donate_to_charity", 20);
         decisionReputationChanges.put("stand_up_to_bully", 10);
+        decisionReputationChanges.put("help_injured_student", 12);
+        decisionReputationChanges.put("return_lost_item", 8);
+        decisionReputationChanges.put("share_knowledge", 6);
+        decisionReputationChanges.put("volunteer_event", 18);
+        decisionReputationChanges.put("defend_weak", 14);
+        decisionReputationChanges.put("honest_confession", 16);
+        decisionReputationChanges.put("sacrifice_for_others", 25);
+        
+        // Negative moral decisions
         decisionReputationChanges.put("cheat_on_test", -15);
         decisionReputationChanges.put("steal_from_store", -25);
         decisionReputationChanges.put("lie_to_friend", -10);
+        decisionReputationChanges.put("abandon_teammate", -20);
+        decisionReputationChanges.put("spread_rumors", -12);
+        decisionReputationChanges.put("break_promise", -8);
+        decisionReputationChanges.put("ignore_cry_for_help", -18);
+        decisionReputationChanges.put("sabotage_competitor", -22);
+        decisionReputationChanges.put("exploit_weakness", -16);
+        decisionReputationChanges.put("betray_trust", -30);
+        
+        // Neutral decisions with context-dependent reputation
+        decisionReputationChanges.put("neutral_choice_1", 0);
+        decisionReputationChanges.put("neutral_choice_2", 0);
+        decisionReputationChanges.put("pragmatic_decision", 2);
+        decisionReputationChanges.put("strategic_withdrawal", 3);
+        decisionReputationChanges.put("compromise_solution", 5);
     }
 
     @Override

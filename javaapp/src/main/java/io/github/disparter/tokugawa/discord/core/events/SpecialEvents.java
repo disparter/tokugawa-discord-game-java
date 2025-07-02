@@ -366,6 +366,32 @@ public class SpecialEvents extends BaseEvent {
     }
 
     /**
+     * Get information about the current special event.
+     *
+     * @return A map containing event information
+     */
+    public Map<String, Object> getCurrentEventInfo() {
+        Map<String, Object> info = new HashMap<>();
+        
+        if (currentEvent == null) {
+            info.put("name", "Nenhum evento especial em andamento");
+            info.put("participants", 0);
+            info.put("end_time", null);
+            info.put("running", false);
+        } else {
+            info.put("name", currentEvent.get("name"));
+            info.put("participants", eventParticipants.size());
+            info.put("end_time", eventEndTime);
+            info.put("running", true);
+            info.put("description", currentEvent.get("description"));
+            info.put("start_time", currentEvent.get("start_time"));
+            info.put("type", currentEvent.get("type"));
+        }
+        
+        return info;
+    }
+
+    /**
      * Clean up resources.
      */
     @Override

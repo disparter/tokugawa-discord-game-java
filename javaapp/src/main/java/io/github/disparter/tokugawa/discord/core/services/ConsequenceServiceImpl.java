@@ -138,13 +138,13 @@ public class ConsequenceServiceImpl implements ConsequenceService {
     public Player applyConsequenceEffects(Player player) {
         List<Consequence> activeConsequences = getActiveConsequencesForPlayer(player.getId());
 
-        // This is a simplified implementation
-        // In a real implementation, you would parse the effects and apply them to the player
-        // For example, effects could be strings like "reputation:+10" or "currency:-5"
-
+        // Parse the effects and apply them to the player
+        // Effects are strings like "reputation:+10", "currency:-5", "stat:strength:+2", etc.
         for (Consequence consequence : activeConsequences) {
-            for (String effect : consequence.getEffects()) {
-                applyEffect(player, effect);
+            if (consequence.getEffects() != null) {
+                for (String effect : consequence.getEffects()) {
+                    applyEffect(player, effect);
+                }
             }
         }
 
@@ -159,29 +159,62 @@ public class ConsequenceServiceImpl implements ConsequenceService {
      */
     private void applyEffect(Player player, String effect) {
         // Parse the effect string
-        // Format: "attribute:value"
+        // Format: "attribute:value" or "stat:statName:value"
         String[] parts = effect.split(":");
-        if (parts.length != 2) {
+        if (parts.length < 2) {
             return;
         }
 
         String attribute = parts[0];
-        String valueStr = parts[1];
 
         try {
             // Handle different attributes
             switch (attribute) {
                 case "reputation":
-                    int reputationChange = Integer.parseInt(valueStr);
+                    int reputationChange = Integer.parseInt(parts[1]);
                     player.setReputation(player.getReputation() + reputationChange);
                     break;
                 case "currency":
-                    int currencyChange = Integer.parseInt(valueStr);
+                    int currencyChange = Integer.parseInt(parts[1]);
                     player.setCurrency(player.getCurrency() + currencyChange);
                     break;
                 case "experience":
-                    int experienceChange = Integer.parseInt(valueStr);
+                    int experienceChange = Integer.parseInt(parts[1]);
                     player.setExperience(player.getExperience() + experienceChange);
+                    break;
+                case "level":
+                    int levelChange = Integer.parseInt(parts[1]);
+                    player.setLevel(Math.max(1, player.getLevel() + levelChange));
+                    break;
+                case "exp":
+                    int expChange = Integer.parseInt(parts[1]);
+                    player.setExp(Math.max(0, player.getExp() + expChange));
+                    break;
+                case "points":
+                    int pointsChange = Integer.parseInt(parts[1]);
+                    player.setPoints(Math.max(0, player.getPoints() + pointsChange));
+                    break;
+                case "stat":
+                    if (parts.length >= 3) {
+                        String statName = parts[1];
+                        int statChange = Integer.parseInt(parts[2]);
+                        if (player.getStats() == null) {
+                            player.setStats(new HashMap<>());
+                        }
+                        int currentValue = player.getStats().getOrDefault(statName, 0);
+                        player.getStats().put(statName, Math.max(0, currentValue + statChange));
+                    }
+                    break;
+                case "skill":
+                    if (parts.length >= 3) {
+                        String skillName = parts[1];
+                        int skillChange = Integer.parseInt(parts[2]);
+                        if (player.getSkills() == null) {
+                            player.setSkills(new HashMap<>());
+                        }
+                        int currentValue = player.getSkills().getOrDefault(skillName, 0);
+                        player.getSkills().put(skillName, Math.max(0, currentValue + skillChange));
+                    }
                     break;
                 // Add more attributes as needed
             }

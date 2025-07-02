@@ -68,6 +68,25 @@ public class NPC {
     )
     private Set<Technique> knownTechniques = new HashSet<>();
 
+    // Location where this NPC is found
+    @Column(name = "location_id")
+    private Long locationId;
+
+    // Flag to indicate if this NPC is a trader
+    @Column(name = "is_trader", nullable = false)
+    private Boolean isTrader = false;
+
+    // Trading inventory and preferences for trader NPCs
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "npc_trade_items", joinColumns = @JoinColumn(name = "npc_id"))
+    @Column(name = "item_id")
+    private List<Long> tradeInventory = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "npc_preferred_items", joinColumns = @JoinColumn(name = "npc_id"))
+    @Column(name = "item_type")
+    private List<String> preferredItemTypes = new ArrayList<>();
+
     /**
      * Enum representing the type of NPC.
      */

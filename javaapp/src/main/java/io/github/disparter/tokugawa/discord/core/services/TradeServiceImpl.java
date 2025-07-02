@@ -40,8 +40,7 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public Map<Item, Integer> getNPCTradeItems(NPC npc) {
-        // In a real implementation, this would be stored in the database
-        // For now, we'll use a simple approach where NPCs accept items based on their type
+        // Get items that the NPC will accept for trade based on their preferences
         Map<Item, Integer> tradeItems = new HashMap<>();
 
         // Get all items from the repository
@@ -63,18 +62,27 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public Map<Item, Integer> getNPCTradeRewards(NPC npc) {
-        // In a real implementation, this would be stored in the database
-        // For now, we'll use a simple approach where NPCs offer rewards based on their type
+        // Get items that the NPC offers as rewards based on their inventory and type
         Map<Item, Integer> tradeRewards = new HashMap<>();
 
-        // Get all items from the repository
-        Iterable<Item> allItems = itemRepository.findAll();
-
-        for (Item item : allItems) {
-            // Calculate a trade cost based on the item's price and the NPC's preferences
-            int tradeCost = calculateTradeCost(npc, item);
-            if (tradeCost > 0) {
-                tradeRewards.put(item, tradeCost);
+        // If NPC has a specific trade inventory, use that
+        if (npc.getTradeInventory() != null && !npc.getTradeInventory().isEmpty()) {
+            for (Long itemId : npc.getTradeInventory()) {
+                itemRepository.findById(itemId).ifPresent(item -> {
+                    int tradeCost = calculateTradeCost(npc, item);
+                    if (tradeCost > 0) {
+                        tradeRewards.put(item, tradeCost);
+                    }
+                });
+            }
+        } else {
+            // Fall back to all items with cost calculation
+            Iterable<Item> allItems = itemRepository.findAll();
+            for (Item item : allItems) {
+                int tradeCost = calculateTradeCost(npc, item);
+                if (tradeCost > 0) {
+                    tradeRewards.put(item, tradeCost);
+                }
             }
         }
 
@@ -152,21 +160,14 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public List<NPC> getTradingNPCs() {
-        // In a real implementation, this would filter NPCs based on a "trader" flag
-        // For now, we'll assume all NPCs can trade
-        List<NPC> tradingNPCs = new ArrayList<>();
-        npcRepository.findAll().forEach(tradingNPCs::add);
-        return tradingNPCs;
+        // Filter NPCs based on the trader flag
+        return npcRepository.findByIsTraderTrue();
     }
 
     @Override
     public List<NPC> getTradingNPCsAtLocation(Long locationId) {
-        // TODO: Implement location-based NPC filtering
-        // 1. Add locationId field to NPC entity
-        // 2. Create NPCRepository.findByLocationIdAndIsTraderTrue(Long locationId) method
-        // 3. Filter NPCs by location and trader status
-        // For now, return all trading NPCs as placeholder
-        return getTradingNPCs();
+        // Filter NPCs by location and trader status using the repository method
+        return npcRepository.findByLocationIdAndIsTraderTrue(locationId);
     }
 
     @Override
@@ -251,37 +252,33 @@ public class TradeServiceImpl implements TradeService {
         // Base value is the item's price
         int baseValue = item.getPrice();
 
-        // In a real implementation, this would be based on the NPC's preferences
-        // For now, we'll use a simple approach where NPCs prefer certain item types
-        double multiplier = 1.0;
+        // Apply NPC preference multiplier
+        double preferenceMultiplier = getPreferenceMultiplier(npc, item);
+        double multiplier = preferenceMultiplier;
 
-        // Check NPC type
+        // Check NPC type for additional modifiers
         NPC.NPCType npcType = npc.getType();
-        if (npcType == null) {
-            return baseValue; // Default value if NPC type is null
-        }
-
-        // Different multipliers based on NPC type
-        switch (npcType) {
-            case FACULTY:
-                // Faculty NPCs might value educational or rare items more
-                multiplier = 1.2;
-                if (Item.ItemType.MATERIAL == item.getType()) {
-                    multiplier = 1.5;
-                }
-                break;
-            case STUDENT:
-                // Students might value different items
-                if (Item.ItemType.WEAPON == item.getType() || Item.ItemType.MATERIAL == item.getType()) {
-                    multiplier = 1.3;
-                } else {
-                    multiplier = 0.8;
-                }
-                break;
-            default:
-                // Default: NPCs value items at their base price
-                multiplier = 1.0;
-                break;
+        if (npcType != null) {
+            switch (npcType) {
+                case FACULTY:
+                    // Faculty NPCs might value educational or rare items more
+                    multiplier *= 1.2;
+                    if (Item.ItemType.MATERIAL == item.getType()) {
+                        multiplier *= 1.2; // Additional bonus for materials
+                    }
+                    break;
+                case STUDENT:
+                    // Students might value different items
+                    if (Item.ItemType.WEAPON == item.getType() || Item.ItemType.MATERIAL == item.getType()) {
+                        multiplier *= 1.3;
+                    } else {
+                        multiplier *= 0.8;
+                    }
+                    break;
+                default:
+                    // Default: NPCs value items at their base price
+                    break;
+            }
         }
 
         return (int) (baseValue * multiplier);
@@ -298,38 +295,61 @@ public class TradeServiceImpl implements TradeService {
         // Base cost is the item's price
         int baseCost = reward.getPrice();
 
-        // In a real implementation, this would be based on the NPC's inventory
-        // For now, we'll use a simple approach where NPCs offer certain item types
-        double multiplier = 0.0; // Default: NPC doesn't offer the item
-
-        // Check NPC type
-        NPC.NPCType npcType = npc.getType();
-        if (npcType == null) {
-            return 0; // NPC doesn't offer items if type is null
+        // Check if item is in NPC's trade inventory (if they have one)
+        if (npc.getTradeInventory() != null && !npc.getTradeInventory().isEmpty()) {
+            if (!npc.getTradeInventory().contains(reward.getId())) {
+                return 0; // NPC doesn't offer this item
+            }
         }
 
-        // Different multipliers based on NPC type
-        switch (npcType) {
-            case FACULTY:
-                // Faculty NPCs might offer various items at a markup
-                multiplier = 1.5;
-                break;
-            case STUDENT:
-                // Students might offer specific items
-                if (Item.ItemType.WEAPON == reward.getType() || Item.ItemType.ARMOR == reward.getType()) {
-                    multiplier = 1.3;
-                }
-                break;
-            default:
-                // Default: NPC doesn't offer items
-                multiplier = 0.0;
-                break;
+        // Apply preference-based pricing
+        double preferenceMultiplier = getPreferenceMultiplier(npc, reward);
+        double multiplier = 1.0 / preferenceMultiplier; // Inverse for cost (preferred items cost less)
+
+        // Check NPC type for base pricing strategy
+        NPC.NPCType npcType = npc.getType();
+        if (npcType != null) {
+            switch (npcType) {
+                case FACULTY:
+                    // Faculty NPCs offer items at a markup
+                    multiplier *= 1.5;
+                    break;
+                case STUDENT:
+                    // Students offer specific items at moderate prices
+                    if (Item.ItemType.WEAPON == reward.getType() || Item.ItemType.ARMOR == reward.getType()) {
+                        multiplier *= 1.3;
+                    } else {
+                        multiplier *= 1.1;
+                    }
+                    break;
+                default:
+                    // Base NPCs offer items at standard rates
+                    multiplier *= 1.2;
+                    break;
+            }
+        } else {
+            return 0; // NPC doesn't offer items if type is null
         }
 
         return (int) (baseCost * multiplier);
     }
 
-    // TODO: Implement proper trader flag system in NPC entity
-    // Add a boolean "isTrader" field to the NPC entity and use it to filter trading NPCs
-    // This would replace the current logic that assumes all NPCs can trade
+    /**
+     * Get the trade value multiplier based on NPC preferences and item types.
+     * This method could be expanded to include more sophisticated trading logic.
+     * 
+     * @param npc the NPC
+     * @param item the item
+     * @return the preference multiplier
+     */
+    private double getPreferenceMultiplier(NPC npc, Item item) {
+        // Check if the NPC has preferred item types
+        if (npc.getPreferredItemTypes() != null && !npc.getPreferredItemTypes().isEmpty()) {
+            String itemType = item.getType() != null ? item.getType().toString() : "";
+            if (npc.getPreferredItemTypes().contains(itemType.toLowerCase())) {
+                return 1.5; // 50% bonus for preferred items
+            }
+        }
+        return 1.0; // No preference bonus
+    }
 }

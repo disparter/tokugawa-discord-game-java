@@ -290,6 +290,31 @@ public class WeeklyEvents extends BaseEvent {
     }
 
     /**
+     * Get information about the current tournament.
+     *
+     * @return A map containing tournament information
+     */
+    public Map<String, Object> getCurrentTournamentInfo() {
+        Map<String, Object> info = new HashMap<>();
+        
+        if (currentTournament == null) {
+            info.put("name", "Nenhum torneio em andamento");
+            info.put("participants", 0);
+            info.put("end_time", null);
+            info.put("running", false);
+        } else {
+            info.put("name", currentTournament.get("name"));
+            info.put("participants", tournamentParticipants.size());
+            info.put("end_time", tournamentEndTime);
+            info.put("running", true);
+            info.put("description", currentTournament.get("description"));
+            info.put("start_time", currentTournament.get("start_time"));
+        }
+        
+        return info;
+    }
+
+    /**
      * Clean up resources.
      */
     @Override

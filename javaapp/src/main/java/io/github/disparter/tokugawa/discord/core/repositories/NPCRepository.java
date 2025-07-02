@@ -44,4 +44,36 @@ public interface NPCRepository extends JpaRepository<NPC, Long> {
      * @return the list of NPCs with matching names
      */
     List<NPC> findByNameContainingIgnoreCase(String name);
+
+    /**
+     * Find NPCs by location ID.
+     *
+     * @param locationId the location ID
+     * @return the list of NPCs at the specified location
+     */
+    List<NPC> findByLocationId(Long locationId);
+
+    /**
+     * Find NPCs that are traders.
+     *
+     * @return the list of trader NPCs
+     */
+    List<NPC> findByIsTraderTrue();
+
+    /**
+     * Find NPCs by location ID and trader status.
+     *
+     * @param locationId the location ID
+     * @param isTrader whether the NPC is a trader
+     * @return the list of NPCs at the specified location with the specified trader status
+     */
+    List<NPC> findByLocationIdAndIsTrader(Long locationId, Boolean isTrader);
+
+    /**
+     * Find trader NPCs at a specific location.
+     *
+     * @param locationId the location ID
+     * @return the list of trader NPCs at the specified location
+     */
+    List<NPC> findByLocationIdAndIsTraderTrue(Long locationId);
 }
