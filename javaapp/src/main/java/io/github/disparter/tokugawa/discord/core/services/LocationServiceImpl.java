@@ -180,50 +180,97 @@ public class LocationServiceImpl implements LocationService {
         Event event = eventOpt.get();
 
         // Process the event for the player
-        // This is a simplified implementation
-        // In a real implementation, this would be more sophisticated
-
-        // Example: Update player stats based on event type
+        // Process the event for the player with sophisticated logic based on event type
         if (event.getType() != null) {
             switch (event.getType()) {
                 case BASE:
-                    // Basic event
-                    player.setExp(player.getExp() + 5);
+                    // Basic event with variable rewards based on player level
+                    int baseExp = 5 + (player.getLevel() / 2);
+                    player.setExp(player.getExp() + baseExp);
+                    
+                    // Small chance for bonus currency
+                    if (random.nextDouble() < 0.2) {
+                        player.setCurrency(player.getCurrency() + random.nextInt(5) + 1);
+                    }
                     break;
 
                 case CLIMACTIC:
-                    // Climactic event
-                    boolean won = random.nextBoolean();
+                    // Climactic event with success/failure mechanics
+                    int playerPower = player.getLevel() + player.getStat("strength") + player.getStat("intelligence");
+                    int eventDifficulty = 50 + random.nextInt(30); // Base difficulty 50-80
+                    
+                    boolean won = (playerPower + random.nextInt(20)) > eventDifficulty;
                     if (won) {
-                        player.setExp(player.getExp() + 15);
-                        // Could also add items to inventory, etc.
+                        int expReward = 15 + (player.getLevel() * 2);
+                        player.setExp(player.getExp() + expReward);
+                        player.setReputation(player.getReputation() + 5);
+                        player.setCurrency(player.getCurrency() + 10 + random.nextInt(10));
                     } else {
-                        // Maybe lose some health or items
+                        // Partial failure - still get some experience
+                        player.setExp(player.getExp() + 5);
+                        int healthLoss = Math.min(player.getHealth() / 4, 10);
+                        player.setHealth(Math.max(1, player.getHealth() - healthLoss));
                     }
                     break;
 
                 case RANDOM:
-                    // Random event
-                    player.setExp(player.getExp() + 8);
-                    // Could also add items to inventory, etc.
+                    // Random event with multiple possible outcomes
+                    int outcome = random.nextInt(4);
+                    switch (outcome) {
+                        case 0: // Positive outcome
+                            player.setExp(player.getExp() + 8);
+                            player.setReputation(player.getReputation() + 2);
+                            break;
+                        case 1: // Neutral outcome
+                            player.setExp(player.getExp() + 5);
+                            break;
+                        case 2: // Challenging outcome
+                            player.setExp(player.getExp() + 12);
+                            player.setHealth(Math.max(1, player.getHealth() - 5));
+                            break;
+                        case 3: // Lucky outcome
+                            player.setExp(player.getExp() + 6);
+                            player.setCurrency(player.getCurrency() + 15);
+                            break;
+                    }
                     break;
 
                 case SEASONAL:
-                    // Seasonal event
+                    // Seasonal event with season-specific bonuses
                     player.setReputation(player.getReputation() + 3);
+                    player.setExp(player.getExp() + 7);
+                    
+                    // Seasonal bonus based on current stats
+                    if (player.getStat("charisma") > 15) {
+                        player.setReputation(player.getReputation() + 2); // Charisma bonus
+                    }
                     break;
 
                 case ROMANCE:
-                    // Romance event
+                    // Romance event affecting reputation and relationships
                     player.setReputation(player.getReputation() + 2);
+                    player.setExp(player.getExp() + 4);
+                    
+                    // Bonus for high charisma
+                    if (player.getStat("charisma") > 20) {
+                        player.setReputation(player.getReputation() + 3);
+                    }
                     break;
 
                 case CHOICE_TRIGGERED:
-                    // Choice-triggered event
+                    // Choice-triggered event with decision-based outcomes
                     player.setExp(player.getExp() + 10);
+                    
+                    // Bonus based on player's decision-making history (simulated)
+                    if (player.getReputation() > 50) {
+                        player.setExp(player.getExp() + 5); // Good reputation bonus
+                    }
                     break;
 
-                // Add more event types as needed
+                default:
+                    // Default event handling
+                    player.setExp(player.getExp() + 3);
+                    break;
             }
         }
 

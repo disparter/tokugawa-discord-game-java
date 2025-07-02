@@ -169,7 +169,7 @@ public class NarrativeServiceImpl implements NarrativeService {
 
         // Award completion rewards
         if (chapter.getCompletionExp() != null) {
-            player.setExperience(player.getExperience() + chapter.getCompletionExp());
+            player.setExp(player.getExp() + chapter.getCompletionExp());
         }
 
         if (chapter.getCompletionReward() != null) {
@@ -507,7 +507,7 @@ public class NarrativeServiceImpl implements NarrativeService {
         // Apply experience changes
         if (effects.containsKey("experience")) {
             int change = ((Number) effects.get("experience")).intValue();
-            player.setExperience(player.getExperience() + change);
+            player.setExp(player.getExp() + change);
         }
     }
 
@@ -580,7 +580,7 @@ public class NarrativeServiceImpl implements NarrativeService {
             if (playerWon) {
                 // Increase experience
                 int expGain = 20; // Base experience gain for winning a duel
-                player.setExperience(player.getExperience() + expGain);
+                player.setExp(player.getExp() + expGain);
 
                 // Possibly increase a random stat
                 int statIncrease = 1;
@@ -602,7 +602,7 @@ public class NarrativeServiceImpl implements NarrativeService {
             } else {
                 // Small experience gain even for losing
                 int expGain = 5;
-                player.setExperience(player.getExperience() + expGain);
+                player.setExp(player.getExp() + expGain);
             }
 
             // Save changes

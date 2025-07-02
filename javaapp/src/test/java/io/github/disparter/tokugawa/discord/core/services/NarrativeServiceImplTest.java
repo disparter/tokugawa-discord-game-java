@@ -91,7 +91,7 @@ public class NarrativeServiceImplTest {
         testPlayer.setAgility(10);
         testPlayer.setReputation(50);
         testPlayer.setCurrency(100);
-        testPlayer.setExperience(200);
+        testPlayer.setExp(200);
 
         // Set up test progress
         testProgress = new Progress();

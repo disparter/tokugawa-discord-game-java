@@ -195,14 +195,26 @@ public class ReputationServiceImpl implements ReputationService {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
 
-        // In a real implementation, this would update faction-specific reputation
-        // For now, we'll just update the player's general reputation
-        if (change > 0) {
-            return increaseReputation(playerId, change);
-        } else if (change < 0) {
-            return decreaseReputation(playerId, Math.abs(change));
-        } else {
-            return player;
+        // Update faction-specific reputation
+        if (player.getFactionReputations() == null) {
+            player.setFactionReputations(new HashMap<>());
         }
+
+        // Get current faction reputation or default to 0
+        int currentFactionReputation = player.getFactionReputations().getOrDefault(factionId, 0);
+        int newFactionReputation = Math.max(0, currentFactionReputation + change);
+        
+        // Update faction reputation
+        player.getFactionReputations().put(factionId, newFactionReputation);
+
+        // Also update general reputation with a smaller impact
+        int generalChange = change / 2; // Faction changes have 50% impact on general reputation
+        if (generalChange > 0) {
+            player.setReputation(player.getReputation() + generalChange);
+        } else if (generalChange < 0) {
+            player.setReputation(Math.max(0, player.getReputation() + generalChange));
+        }
+
+        return playerRepository.save(player);
     }
 }

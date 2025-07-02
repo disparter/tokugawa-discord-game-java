@@ -98,6 +98,13 @@ public class Player {
     @Column(name = "progress_value")
     private Map<String, String> dailyProgress = new HashMap<>();
 
+    // Faction-specific reputation values
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "player_faction_reputations", joinColumns = @JoinColumn(name = "player_id"))
+    @MapKeyColumn(name = "faction_id")
+    @Column(name = "reputation_value")
+    private Map<String, Integer> factionReputations = new HashMap<>();
+
     /**
      * Gets the username of the player.
      * This is an alias for getName() for compatibility with some parts of the code.
@@ -218,25 +225,7 @@ public class Player {
         setStat("charisma", value);
     }
 
-    /**
-     * Gets the experience value.
-     * This is an alias for getExp() for compatibility with some parts of the code.
-     * 
-     * @return the experience value
-     */
-    public Integer getExperience() {
-        return exp;
-    }
 
-    /**
-     * Sets the experience value.
-     * This is an alias for setExp() for compatibility with some parts of the code.
-     * 
-     * @param value the value to set
-     */
-    public void setExperience(Integer value) {
-        this.exp = value;
-    }
 
     /**
      * Gets the currency value.
