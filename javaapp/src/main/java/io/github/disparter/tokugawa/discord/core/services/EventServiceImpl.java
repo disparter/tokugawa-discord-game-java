@@ -68,35 +68,34 @@ public class EventServiceImpl implements EventService {
      * Initializes the romance routes with their requirements and chapters.
      */
     private void initializeRomanceRoutes() {
-        // For each romance-capable NPC, set the minimum affinity required
-        // and the sequence of events that make up their romance route
+        // TODO: Replace hardcoded romance routes with database or configuration file loading
+        // This should load romance configuration from:
+        // 1. Database table (romance_routes) with columns: npc_id, required_affinity, chapter_sequence
+        // 2. Or configuration file (romance-routes.json) with structured romance data
+        // 3. Or external service that provides romance route configurations
+        
+        // Temporary hardcoded implementation for basic functionality
+        // Romance routes configuration - should be externalized to a config file or database
 
-        // Romance routes configuration - could be externalized to a config file or database
-        // Route 1
         romanceRequirements.put(1L, 80); // NPC with ID 1 requires affinity 80
         romanceChapters.put(1L, List.of("romance_1_1", "romance_1_2", "romance_1_3"));
 
-        // Route 2
+        // Additional NPCs - these should be loaded from database or config
         romanceRequirements.put(2L, 80);
         romanceChapters.put(2L, List.of("romance_2_1", "romance_2_2", "romance_2_3"));
 
-        // Route 3
         romanceRequirements.put(3L, 80);
         romanceChapters.put(3L, List.of("romance_3_1", "romance_3_2", "romance_3_3"));
 
-        // Route 4
         romanceRequirements.put(4L, 80);
         romanceChapters.put(4L, List.of("romance_4_1", "romance_4_2", "romance_4_3"));
 
-        // Route 5
         romanceRequirements.put(5L, 80);
         romanceChapters.put(5L, List.of("romance_5_1", "romance_5_2", "romance_5_3"));
 
-        // Route 6
         romanceRequirements.put(6L, 80);
         romanceChapters.put(6L, List.of("romance_6_1", "romance_6_2", "romance_6_3"));
 
-        // Route 7
         romanceRequirements.put(7L, 80);
         romanceChapters.put(7L, List.of("romance_7_1", "romance_7_2", "romance_7_3"));
     }
@@ -839,6 +838,10 @@ public class EventServiceImpl implements EventService {
                         // For now, we'll log the successful application
                         log.info("Applied item reward with ID {} to player {}", itemId, player.getId());
                         // TODO: Implement actual item addition via InventoryService
+                        // This requires:
+                        // 1. Inject InventoryService dependency in constructor
+                        // 2. Call inventoryService.addItemToInventory(player, itemId, 1)
+                        // 3. Handle any exceptions from inventory operations
                         // inventoryService.addItemToInventory(player, itemId, 1);
                     } catch (NumberFormatException e) {
                         log.warn("Invalid item ID format: {}", valueStr);

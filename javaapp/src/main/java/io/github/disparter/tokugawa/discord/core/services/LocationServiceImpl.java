@@ -338,8 +338,8 @@ public class LocationServiceImpl implements LocationService {
         }
 
         // Parse the requirements string to determine what the player needs
-        // This is a simplified implementation that supports basic requirement types
-        // In a real implementation, this would be more sophisticated
+        // This implementation supports multiple requirement types including stats, skills, level, and reputation
+        // TODO: Consider extending with additional requirement types like items, quests, or complex conditions
 
         // Example requirement format: "stat:strength:10" or "item:sword" or "level:5"
         String[] parts = requirements.split(":");
@@ -417,8 +417,8 @@ public class LocationServiceImpl implements LocationService {
         }
 
         // Parse the requirements string to determine what the player needs
-        // This is a simplified implementation that supports basic requirement types
-        // In a real implementation, this would be more sophisticated
+        // This implementation supports comprehensive requirement checking including stats, skills, level, reputation, quests, achievements, and location dependencies
+        // TODO: Consider extending with additional requirement types like item possession, complex boolean conditions, or time-based requirements
 
         // Example requirement format: "stat:strength:10" or "item:sword" or "level:5"
         String[] parts = requirements.split(":");
