@@ -162,6 +162,7 @@ public class TradeServiceImpl implements TradeService {
     @Override
     public List<NPC> getTradingNPCsAtLocation(Long locationId) {
         // TODO: Implement proper location-based NPC filtering when location system is implemented
+        // This should filter NPCs by their location ID once the location system is fully integrated
         // For now, return all trading NPCs
         return getTradingNPCs();
     }
@@ -332,6 +333,8 @@ public class TradeServiceImpl implements TradeService {
      * @param npc the NPC
      * @return true if the NPC is a trader, false otherwise
      */
+    // TODO: Implement proper trader flag system in NPC entity
+    // This method should check a "trader" boolean field in the NPC entity
     private boolean isNPCTrader(NPC npc) {
         // In a real implementation, this would be based on a "trader" flag
         // For now, we'll use a simple approach where certain NPC types are traders

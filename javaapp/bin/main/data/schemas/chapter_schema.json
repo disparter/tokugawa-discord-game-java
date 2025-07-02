@@ -1,0 +1,168 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Chapter Schema",
+  "description": "Schema for validating chapter data in the story mode",
+  "type": "object",
+  "required": ["id", "type", "content"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]+(_[0-9]+)*(_[a-z_]+)?$",
+      "description": "Unique identifier for the chapter node (e.g. 1_1, 2_3_romance_scene)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "dialogue",
+        "narration",
+        "choice_point",
+        "conditional",
+        "conclusion"
+      ],
+      "description": "Type of narrative node"
+    },
+    "content": {
+      "type": "object",
+      "required": ["text"],
+      "properties": {
+        "speaker": {
+          "type": "string",
+          "enum": ["narrator", "npc", "player"],
+          "description": "Who is speaking in this node"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The actual content of the node"
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "skill_check": {
+                "type": "string",
+                "enum": ["charisma", "dexterity", "intellect", "power_stat"]
+              },
+              "club_power": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5,
+                "description": "Required club power level for this choice"
+              },
+              "romance_route": {
+                "type": "string",
+                "enum": [
+                  "akane",
+                  "yuki",
+                  "sakura",
+                  "mitsuki",
+                  "ayame",
+                  "rei",
+                  "kaede"
+                ]
+              },
+              "success": {
+                "type": "object",
+                "required": ["next_chapter"],
+                "properties": {
+                  "next_chapter": {
+                    "type": "string",
+                    "pattern": "^[0-9]+(_[0-9]+)*(_[a-z_]+)?$"
+                  },
+                  "affinity_change": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer"
+                    }
+                  },
+                  "attribute_bonus": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "failure": {
+                "type": "object",
+                "required": ["next_chapter"],
+                "properties": {
+                  "next_chapter": {
+                    "type": "string",
+                    "pattern": "^[0-9]+(_[0-9]+)*(_[a-z_]+)?$"
+                  },
+                  "affinity_change": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "conditions": {
+          "type": "object",
+          "properties": {
+            "required_affinity": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required_club_level": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "required_attribute": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "next_chapter": {
+          "type": "string",
+          "pattern": "^[0-9]+(_[0-9]+)*(_[a-z_]+)?$",
+          "description": "Next chapter to proceed to"
+        },
+        "rewards": {
+          "type": "object",
+          "properties": {
+            "exp": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tusd": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "affinity": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "attributes": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

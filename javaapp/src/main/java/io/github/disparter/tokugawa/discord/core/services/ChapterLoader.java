@@ -354,7 +354,8 @@ public class ChapterLoader {
                         }
                     }
                 } else if (requirementStr.startsWith("chapter:")) {
-                    // Legacy format: "chapter:chapter_id"
+                    // TODO: Remove this legacy format support once all data is migrated to JSON format
+                    // Legacy format: "chapter:chapter_id" - should be replaced with JSON format
                     String requiredChapter = requirementStr.substring("chapter:".length());
                     if (!completedChapters.contains(requiredChapter)) {
                         return false;

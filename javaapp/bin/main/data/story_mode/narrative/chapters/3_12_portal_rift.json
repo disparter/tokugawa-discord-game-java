@@ -1,0 +1,98 @@
+{
+  "chapter_id": "3_12_portal_rift",
+  "type": "story",
+  "title": "O Portal Dimensional",
+  "description": "O portal dimensional que ameaça a realidade",
+  "phase": "year_3",
+  "requirements": {
+    "previous_chapter": "3_11_final_tournament",
+    "flags": {
+      "year_3_events_completed": true,
+      "portal_rift_available": true
+    },
+    "stats": {
+      "power": 80,
+      "knowledge": 80
+    }
+  },
+  "scenes": [
+    {
+      "scene_id": "rift_confrontation",
+      "title": "Confronto no Portal",
+      "description": "O momento decisivo no portal dimensional",
+      "background": "dimensional_rift.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "center",
+          "expression": "determined",
+          "image": "player_determined.png"
+        },
+        {
+          "id": "headmaster",
+          "position": "right",
+          "expression": "serious",
+          "image": "headmaster_serious.png"
+        },
+        {
+          "id": "dimensional_entity",
+          "position": "left",
+          "expression": "threatening",
+          "image": "dimensional_entity.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "dimensional_entity",
+          "text": "Você não pode me deter. O portal está aberto e a realidade será reescrita.",
+          "expression": "threatening"
+        },
+        {
+          "speaker": "headmaster",
+          "text": "Use todo seu poder e conhecimento. O destino da academia está em suas mãos.",
+          "expression": "serious"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Confrontar a entidade",
+          "next_scene": "entity_confrontation",
+          "effects": {
+            "power": 5,
+            "reputation": {
+              "headmaster": 7
+            }
+          }
+        },
+        {
+          "text": "Fechar o portal",
+          "next_scene": "portal_closure",
+          "effects": {
+            "knowledge": 5,
+            "caution": 3
+          }
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "experience": 1000,
+    "skills": {
+      "dimensional_control": 3,
+      "reality_manipulation": 2
+    },
+    "items": ["dimensional_seal", "reality_anchor"],
+    "unlocks": ["dimensional_mastery", "reality_guardian"]
+  },
+  "next_chapter": "3_13_graduation_ceremony",
+  "flags": {
+    "portal_rift_resolved": true,
+    "dimensional_mastery_achieved": true
+  },
+  "metadata": {
+    "location": "dimensional_rift",
+    "time_of_day": "special",
+    "weather": "dimensional",
+    "season": "special"
+  }
+} 

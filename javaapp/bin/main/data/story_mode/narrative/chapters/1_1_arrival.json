@@ -1,0 +1,672 @@
+{
+  "chapter_id": "1_1_arrival",
+  "type": "story",
+  "title": "Chegada à Academia",
+  "description": "O primeiro dia na Academia Tokugawa",
+  "phase": "year_1_intro",
+  "scenes": [
+    {
+      "scene_id": "academy_gate",
+      "title": "Portão da Academia",
+      "description": "A chegada à Academia Tokugawa",
+      "background": "tokugawa_academy_1.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "center",
+          "expression": "nervous",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "welcoming",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Bem-vindo à Academia Tokugawa. Aqui você descobrirá seus poderes e encontrará seu caminho.",
+          "expression": "welcoming"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Expressar interesse em magia elemental",
+          "next_scene": "elemental_interest",
+          "effects": {
+            "reputation": {
+              "professor_elementus": 5
+            },
+            "elemental_affinity": 2
+          }
+        },
+        {
+          "text": "Perguntar sobre os clubes disponíveis",
+          "next_scene": "club_introduction",
+          "effects": {
+            "knowledge": 2
+          }
+        }
+      ]
+    },
+    {
+      "scene_id": "club_introduction",
+      "title": "Introdução aos Clubes",
+      "description": "Conhecendo as opções de clubes disponíveis",
+      "background": "tokugawa_academy_2.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "interested",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "explaining",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Temos cinco clubes principais: Clube das Chamas, Clube de Combate, Clube dos Elementalistas, Clube Político e Clube dos Ilusionistas. Cada um tem seu foco e tradição.",
+          "expression": "explaining"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Conhecer o Clube das Chamas",
+          "next_scene": "fire_club_intro",
+          "effects": {
+            "club_interest": "fire"
+          }
+        },
+        {
+          "text": "Conhecer o Clube de Combate",
+          "next_scene": "combat_club_intro",
+          "effects": {
+            "club_interest": "combat"
+          }
+        },
+        {
+          "text": "Conhecer o Clube dos Elementalistas",
+          "next_scene": "elementalist_club_intro",
+          "effects": {
+            "club_interest": "elementalist"
+          }
+        },
+        {
+          "text": "Conhecer o Clube Político",
+          "next_scene": "political_club_intro",
+          "effects": {
+            "club_interest": "political"
+          }
+        },
+        {
+          "text": "Conhecer o Clube dos Ilusionistas",
+          "next_scene": "illusionist_club_intro",
+          "effects": {
+            "club_interest": "illusionist"
+          }
+        }
+      ]
+    },
+    {
+      "scene_id": "elemental_interest",
+      "title": "Interesse em Magia Elemental",
+      "description": "Expressando interesse em magia elemental",
+      "background": "tokugawa_academy_1.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "interested",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "pleased",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Excelente! A magia elemental é a base de todos os poderes na Academia. Você tem afinidade com algum elemento específico?",
+          "expression": "pleased"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Fogo",
+          "next_scene": "fire_affinity",
+          "effects": {
+            "elemental_affinity": "fire",
+            "reputation": {
+              "professor_elementus": 2
+            }
+          }
+        },
+        {
+          "text": "Água",
+          "next_scene": "water_affinity",
+          "effects": {
+            "elemental_affinity": "water",
+            "reputation": {
+              "professor_elementus": 2
+            }
+          }
+        },
+        {
+          "text": "Terra",
+          "next_scene": "earth_affinity",
+          "effects": {
+            "elemental_affinity": "earth",
+            "reputation": {
+              "professor_elementus": 2
+            }
+          }
+        },
+        {
+          "text": "Ar",
+          "next_scene": "air_affinity",
+          "effects": {
+            "elemental_affinity": "air",
+            "reputation": {
+              "professor_elementus": 2
+            }
+          }
+        },
+        {
+          "text": "Não tenho certeza ainda",
+          "next_scene": "club_introduction",
+          "effects": {
+            "reputation": {
+              "professor_elementus": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene_id": "fire_affinity",
+      "title": "Afinidade com Fogo",
+      "description": "Descobrindo afinidade com o elemento Fogo",
+      "background": "tokugawa_academy_1.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "determined",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "impressed",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Fogo! Um elemento poderoso e cheio de paixão. Você pode se interessar pelo Clube das Chamas.",
+          "expression": "impressed"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Conhecer o Clube das Chamas",
+          "next_scene": "fire_club_intro",
+          "effects": {
+            "club_interest": "fire"
+          }
+        },
+        {
+          "text": "Conhecer outros clubes primeiro",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "water_affinity",
+      "title": "Afinidade com Água",
+      "description": "Descobrindo afinidade com o elemento Água",
+      "background": "tokugawa_academy_1.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "calm",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "impressed",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Água! Um elemento fluido e adaptável. Você pode se interessar pelo Clube dos Elementalistas.",
+          "expression": "impressed"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Conhecer o Clube dos Elementalistas",
+          "next_scene": "elementalist_club_intro",
+          "effects": {
+            "club_interest": "elementalist"
+          }
+        },
+        {
+          "text": "Conhecer outros clubes primeiro",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "earth_affinity",
+      "title": "Afinidade com Terra",
+      "description": "Descobrindo afinidade com o elemento Terra",
+      "background": "tokugawa_academy_1.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "grounded",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "impressed",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Terra! Um elemento estável e resistente. Você pode se interessar pelo Clube Político.",
+          "expression": "impressed"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Conhecer o Clube Político",
+          "next_scene": "political_club_intro",
+          "effects": {
+            "club_interest": "political"
+          }
+        },
+        {
+          "text": "Conhecer outros clubes primeiro",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "air_affinity",
+      "title": "Afinidade com Ar",
+      "description": "Descobrindo afinidade com o elemento Ar",
+      "background": "tokugawa_academy_1.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "free",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "impressed",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Ar! Um elemento livre e criativo. Você pode se interessar pelo Clube dos Ilusionistas.",
+          "expression": "impressed"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Conhecer o Clube dos Ilusionistas",
+          "next_scene": "illusionist_club_intro",
+          "effects": {
+            "club_interest": "illusionist"
+          }
+        },
+        {
+          "text": "Conhecer outros clubes primeiro",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "fire_club_intro",
+      "title": "Clube das Chamas",
+      "description": "Conhecendo o Clube das Chamas",
+      "background": "clube_das_chamas_intro.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "curious",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "ryuji",
+          "position": "right",
+          "expression": "welcoming",
+          "image": "ryuji_battleborn_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "ryuji",
+          "text": "Bem-vindo ao Clube das Chamas. Aqui você aprenderá a controlar o fogo e a força interior.",
+          "expression": "welcoming"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Juntar-se ao Clube das Chamas",
+          "next_scene": "club_join_confirmation",
+          "effects": {
+            "club": "fire",
+            "reputation": {
+              "ryuji": 5
+            }
+          }
+        },
+        {
+          "text": "Voltar para conhecer outros clubes",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "combat_club_intro",
+      "title": "Clube de Combate",
+      "description": "Conhecendo o Clube de Combate",
+      "background": "clube_de_combate_intro.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "curious",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "takeshi",
+          "position": "right",
+          "expression": "stern",
+          "image": "takeshi_steelarm_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "takeshi",
+          "text": "Bem-vindo ao Clube de Combate. Aqui você aprenderá a disciplina e a força física necessárias para um verdadeiro guerreiro.",
+          "expression": "stern"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Juntar-se ao Clube de Combate",
+          "next_scene": "club_join_confirmation",
+          "effects": {
+            "club": "combat",
+            "reputation": {
+              "takeshi": 5
+            }
+          }
+        },
+        {
+          "text": "Voltar para conhecer outros clubes",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "elementalist_club_intro",
+      "title": "Clube dos Elementalistas",
+      "description": "Conhecendo o Clube dos Elementalistas",
+      "background": "clube_dos_elementalistas_intro.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "curious",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "mizuki",
+          "position": "right",
+          "expression": "friendly",
+          "image": "mizuki_waterflow_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "mizuki",
+          "text": "Bem-vindo ao Clube dos Elementalistas. Aqui você aprenderá a harmonia entre os elementos e como equilibrá-los em seu interior.",
+          "expression": "friendly"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Juntar-se ao Clube dos Elementalistas",
+          "next_scene": "club_join_confirmation",
+          "effects": {
+            "club": "elementalist",
+            "reputation": {
+              "mizuki": 5
+            }
+          }
+        },
+        {
+          "text": "Voltar para conhecer outros clubes",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "political_club_intro",
+      "title": "Clube Político",
+      "description": "Conhecendo o Clube Político",
+      "background": "clube_politico_intro.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "curious",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "hiroshi",
+          "position": "right",
+          "expression": "diplomatic",
+          "image": "hiroshi_stonevoice_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "hiroshi",
+          "text": "Bem-vindo ao Clube Político. Aqui você aprenderá a arte da diplomacia, estratégia e liderança.",
+          "expression": "diplomatic"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Juntar-se ao Clube Político",
+          "next_scene": "club_join_confirmation",
+          "effects": {
+            "club": "political",
+            "reputation": {
+              "hiroshi": 5
+            }
+          }
+        },
+        {
+          "text": "Voltar para conhecer outros clubes",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "illusionist_club_intro",
+      "title": "Clube dos Ilusionistas",
+      "description": "Conhecendo o Clube dos Ilusionistas",
+      "background": "clube_dos_ilusionistas_intro.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "curious",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "yuki",
+          "position": "right",
+          "expression": "mysterious",
+          "image": "yuki_mistwalker_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "yuki",
+          "text": "Bem-vindo ao Clube dos Ilusionistas. Aqui você aprenderá a manipular a percepção e a realidade através da mente.",
+          "expression": "mysterious"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Juntar-se ao Clube dos Ilusionistas",
+          "next_scene": "club_join_confirmation",
+          "effects": {
+            "club": "illusionist",
+            "reputation": {
+              "yuki": 5
+            }
+          }
+        },
+        {
+          "text": "Voltar para conhecer outros clubes",
+          "next_scene": "club_introduction"
+        }
+      ]
+    },
+    {
+      "scene_id": "club_join_confirmation",
+      "title": "Confirmação de Clube",
+      "description": "Confirmando a escolha do clube",
+      "background": "tokugawa_academy_2.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "determined",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "pleased",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Excelente escolha! Seu clube será uma parte importante da sua jornada na Academia Tokugawa. Agora, vamos continuar com a orientação.",
+          "expression": "pleased"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Continuar",
+          "next_chapter": "1_2_power_awakening",
+          "effects": {
+            "experience": 50,
+            "reputation": {
+              "professor_elementus": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene_id": "classrooms_tour",
+      "title": "Salas de Aula",
+      "description": "Conhecendo as salas de aula",
+      "background": "classroom_front.png",
+      "characters": [
+        {
+          "id": "player",
+          "position": "left",
+          "expression": "curious",
+          "image": "student_room_reflection_night.png"
+        },
+        {
+          "id": "professor_elementus",
+          "position": "right",
+          "expression": "explaining",
+          "image": "professor_elementus_intro.png"
+        }
+      ],
+      "dialogue": [
+        {
+          "speaker": "professor_elementus",
+          "text": "Estas são nossas salas de aula. Aqui você aprenderá teoria mágica, história, e os fundamentos do controle de poderes.",
+          "expression": "explaining"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Continuar o tour",
+          "next_scene": "academy_tour"
+        },
+        {
+          "text": "Ir para o próximo capítulo",
+          "next_scene": "chapter_end",
+          "effects": {
+            "chapter_complete": true,
+            "knowledge": 5
+          }
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "experience": 100,
+    "skills": {
+      "academic": 1,
+      "social": 1
+    },
+    "unlocks": ["club_selection", "romance_routes", "power_awakening"]
+  },
+  "next_chapter": "1_2_power_awakening",
+  "flags": {
+    "first_day_completed": true,
+    "club_selection_available": true,
+    "romance_routes_available": true
+  },
+  "metadata": {
+    "location": "academy_entrance",
+    "time_of_day": "morning",
+    "weather": "clear",
+    "season": "spring"
+  }
+} 
