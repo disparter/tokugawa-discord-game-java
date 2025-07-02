@@ -36,6 +36,10 @@ javaapp/.gradle/
 gradle-app.setting
 !gradle-wrapper.jar
 
+# IDE build outputs
+bin/
+javaapp/bin/
+
 # Maven
 target/
 pom.xml.tag
