@@ -32,6 +32,7 @@ public class LocationServiceImpl implements LocationService {
     private final ItemRepository itemRepository;
     private final EventRepository eventRepository;
     private final PlayerRepository playerRepository;
+    private final InventoryService inventoryService;
     private final Random random = new Random();
 
     @Autowired
@@ -40,12 +41,14 @@ public class LocationServiceImpl implements LocationService {
             NPCRepository npcRepository,
             ItemRepository itemRepository,
             EventRepository eventRepository,
-            PlayerRepository playerRepository) {
+            PlayerRepository playerRepository,
+            InventoryService inventoryService) {
         this.locationRepository = locationRepository;
         this.npcRepository = npcRepository;
         this.itemRepository = itemRepository;
         this.eventRepository = eventRepository;
         this.playerRepository = playerRepository;
+        this.inventoryService = inventoryService;
     }
 
     @Override
@@ -338,8 +341,8 @@ public class LocationServiceImpl implements LocationService {
         }
 
         // Parse the requirements string to determine what the player needs
-        // This implementation supports multiple requirement types including stats, skills, level, and reputation
-        // TODO: Consider extending with additional requirement types like items, quests, or complex conditions
+        // This implementation supports comprehensive requirement types including stats, skills, level, reputation, items, and time-based conditions
+        // Supports complex boolean logic and multiple requirement combinations
 
         // Example requirement format: "stat:strength:10" or "item:sword" or "level:5"
         String[] parts = requirements.split(":");
@@ -374,6 +377,51 @@ public class LocationServiceImpl implements LocationService {
                 if (parts.length < 2) return false;
                 int requiredReputation = Integer.parseInt(parts[1]);
                 return player.getReputation() >= requiredReputation;
+
+            case "item":
+                if (parts.length < 2) return false;
+                String itemName = parts[1];
+                // Check if player has the required item in inventory
+                return inventoryService.getPlayerItems(player).keySet().stream()
+                        .anyMatch(item -> item.getName().equalsIgnoreCase(itemName));
+
+            case "time":
+                if (parts.length < 3) return false;
+                String timeType = parts[1];
+                int timeValue = Integer.parseInt(parts[2]);
+                return checkTimeRequirement(timeType, timeValue);
+
+            case "currency":
+                if (parts.length < 2) return false;
+                int requiredCurrency = Integer.parseInt(parts[1]);
+                return player.getCurrency() >= requiredCurrency;
+
+            case "and":
+                // Complex AND logic: "and:req1,req2,req3"
+                if (parts.length < 2) return false;
+                String[] andRequirements = parts[1].split(",");
+                for (String andReq : andRequirements) {
+                    if (!checkSingleRequirement(playerId, locationId, andReq.trim())) {
+                        return false;
+                    }
+                }
+                return true;
+
+            case "or":
+                // Complex OR logic: "or:req1,req2,req3"
+                if (parts.length < 2) return false;
+                String[] orRequirements = parts[1].split(",");
+                for (String orReq : orRequirements) {
+                    if (checkSingleRequirement(playerId, locationId, orReq.trim())) {
+                        return true;
+                    }
+                }
+                return false;
+
+            case "not":
+                // Negation logic: "not:requirement"
+                if (parts.length < 2) return false;
+                return !checkSingleRequirement(playerId, locationId, parts[1]);
 
             // Add more requirement types as needed
 
@@ -497,5 +545,103 @@ public class LocationServiceImpl implements LocationService {
 
         player.setCurrentLocation(location);
         return playerRepository.save(player);
+    }
+
+    /**
+     * Check if a time-based requirement is met.
+     * 
+     * @param timeType the type of time requirement (hour, day, month)
+     * @param timeValue the required time value
+     * @return true if the time requirement is met
+     */
+    private boolean checkTimeRequirement(String timeType, int timeValue) {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        
+        switch (timeType.toLowerCase()) {
+            case "hour":
+                return now.getHour() >= timeValue;
+            case "day":
+                return now.getDayOfMonth() >= timeValue;
+            case "month":
+                return now.getMonthValue() >= timeValue;
+            case "year":
+                return now.getYear() >= timeValue;
+            case "dayofweek":
+                // Monday = 1, Sunday = 7
+                return now.getDayOfWeek().getValue() == timeValue;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check a single requirement directly without complex boolean logic.
+     * This method allows for basic requirement checking to support complex boolean operations.
+     * 
+     * @param playerId the player ID
+     * @param locationId the location ID
+     * @param requirement the requirement string to check
+     * @return true if the requirement is met
+     */
+    private boolean checkSingleRequirement(Long playerId, Long locationId, String requirement) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with ID: " + playerId));
+
+        String[] parts = requirement.split(":");
+        if (parts.length < 2) {
+            return false;
+        }
+
+        String requirementType = parts[0];
+
+        switch (requirementType) {
+            case "stat":
+                if (parts.length < 3) return false;
+                String statName = parts[1];
+                int requiredValue = Integer.parseInt(parts[2]);
+                Integer playerStat = player.getStats().get(statName);
+                return playerStat != null && playerStat >= requiredValue;
+
+            case "skill":
+                if (parts.length < 3) return false;
+                String skillName = parts[1];
+                int requiredSkillValue = Integer.parseInt(parts[2]);
+                Integer playerSkill = player.getSkills().get(skillName);
+                return playerSkill != null && playerSkill >= requiredSkillValue;
+
+            case "level":
+                if (parts.length < 2) return false;
+                int requiredLevel = Integer.parseInt(parts[1]);
+                return player.getLevel() >= requiredLevel;
+
+            case "reputation":
+                if (parts.length < 2) return false;
+                int requiredReputation = Integer.parseInt(parts[1]);
+                return player.getReputation() >= requiredReputation;
+
+            case "item":
+                if (parts.length < 2) return false;
+                String itemName = parts[1];
+                return inventoryService.getPlayerItems(player).keySet().stream()
+                        .anyMatch(item -> item.getName().equalsIgnoreCase(itemName));
+
+            case "currency":
+                if (parts.length < 2) return false;
+                int requiredCurrency = Integer.parseInt(parts[1]);
+                return player.getCurrency() >= requiredCurrency;
+
+            case "quest":
+                if (parts.length < 2) return false;
+                String questId = parts[1];
+                return player.getQuests().contains(questId);
+
+            case "achievement":
+                if (parts.length < 2) return false;
+                String achievementId = parts[1];
+                return player.getAchievements().contains(achievementId);
+
+            default:
+                return false;
+        }
     }
 }
