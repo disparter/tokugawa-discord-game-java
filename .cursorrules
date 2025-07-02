@@ -1,0 +1,283 @@
+# Tokugawa Discord Game - Cursor AI Configuration
+# This file provides context and rules for AI-assisted development
+
+## 🎯 **PROJECT OVERVIEW**
+This is a production-ready Spring Boot Discord game implementation featuring:
+- Advanced visual novel gameplay mechanics
+- Database-driven configuration system
+- Reactive Discord integration with Discord4J
+- Comprehensive club/relationship/trading systems
+- Multi-layered caching and performance optimization
+
+## 📁 **PROJECT STRUCTURE**
+```
+tokugawa-discord-game/
+├── javaapp/                    # Main Spring Boot application
+│   ├── src/main/java/com/tokugawa/
+│   │   ├── commands/          # Discord slash commands (@Component)
+│   │   ├── services/          # Business logic (@Service @Transactional)
+│   │   ├── repositories/      # Data access (@Repository JPA)
+│   │   ├── entities/          # JPA entities (@Entity)
+│   │   ├── config/           # Spring configuration (@Configuration)
+│   │   └── TokugawaApplication.java
+│   ├── src/main/resources/
+│   │   ├── application.yml    # Spring Boot configuration
+│   │   └── db/migration/      # Flyway database migrations
+│   └── pom.xml               # Maven dependencies
+├── docs/                     # All project documentation
+└── README.md                # Main project documentation
+```
+
+## 🔧 **TECHNOLOGY STACK & PATTERNS**
+
+### **Core Technologies**
+- **Spring Boot 3.2+**: Main framework with annotation-driven configuration
+- **Discord4J**: Reactive Discord API client (Mono/Flux patterns)
+- **PostgreSQL + JPA/Hibernate**: Database layer with entity relationships
+- **Maven**: Dependency management and build tool
+- **Caffeine Cache**: High-performance in-memory caching
+
+### **Key Design Patterns**
+1. **Service Layer**: All business logic in @Service classes with @Transactional
+2. **Repository Pattern**: JPA repositories extending CrudRepository
+3. **Command Pattern**: Discord commands implementing SlashCommand interface
+4. **Configuration Pattern**: Database-driven config with fallback mechanisms
+
+## 📋 **CODING CONVENTIONS**
+
+### **Java Code Style**
+- **Package Structure**: com.tokugawa.{commands|services|repositories|entities|config}
+- **Naming**: PascalCase for classes, camelCase for methods/variables
+- **Annotations**: Use Spring annotations consistently (@Service, @Repository, @Entity)
+- **Error Handling**: Comprehensive try-catch with detailed logging
+- **Validation**: Input validation at service layer boundaries
+
+### **Database Conventions**
+- **Table Names**: snake_case (players, romance_route_configs, club_members)
+- **Primary Keys**: Long id with @GeneratedValue(strategy = GenerationType.IDENTITY)
+- **Foreign Keys**: Explicit @JoinColumn annotations
+- **Indexes**: Add @Index annotations for frequently queried fields
+
+### **Discord Command Structure**
+```java
+@Component
+public class ExampleCommand implements SlashCommand {
+    private final ExampleService exampleService;
+    
+    @Override
+    public Mono<Void> execute(ChatInputInteractionEvent event) {
+        // 1. Extract parameters
+        // 2. Validate input
+        // 3. Call service layer
+        // 4. Format response with EmbedCreateSpec
+        // 5. Return reactive response
+    }
+}
+```
+
+### **Service Layer Structure**
+```java
+@Service
+@Transactional
+@Slf4j
+public class ExampleServiceImpl implements ExampleService {
+    private final ExampleRepository repository;
+    
+    @Override
+    @Cacheable("example-cache")
+    public Optional<Example> findById(Long id) {
+        // Business logic with error handling
+    }
+}
+```
+
+## 🎮 **GAME MECHANICS IMPLEMENTATION**
+
+### **Core Game Systems**
+1. **Player Management**: User registration, stats, inventory, reputation
+2. **Club System**: Club creation, membership, relationships, competitions
+3. **Event System**: Story progression, romance routes, community choices
+4. **Trading System**: NPC preferences, item valuation, relationship impacts
+5. **Location System**: Exploration, discovery requirements, temporal logic
+
+### **Database-Driven Configuration**
+- **Romance Routes**: Stored in romance_route_configs table with hot-reload
+- **Game Calendar**: Dynamic date/season system affecting gameplay
+- **Asset Management**: Configurable asset paths and metadata
+
+### **Key Service Dependencies**
+```java
+// Common service injection patterns
+private final PlayerService playerService;
+private final InventoryService inventoryService;
+private final LocationService locationService;
+private final NPCService npcService;
+private final RomanceRouteConfigService romanceRouteConfigService;
+```
+
+## 💾 **DATABASE RELATIONSHIPS**
+
+### **Core Entity Relationships**
+- **Player** ↔ **Inventory** (OneToOne)
+- **Player** ↔ **Progress** (OneToOne)
+- **Player** ↔ **Relationship** (OneToMany)
+- **Club** ↔ **Player** (ManyToMany via club_members)
+- **Location** ↔ **NPC** (OneToMany)
+
+### **Configuration Entities**
+- **RomanceRouteConfig**: NPC romance configuration
+- **GameCalendar**: Current game state and events
+- **AssetConfig**: File paths and metadata management
+
+## 🔄 **REACTIVE PROGRAMMING PATTERNS**
+
+### **Discord4J Integration**
+```java
+// Reactive command response pattern
+return event.reply()
+    .withEmbeds(embedSpec)
+    .withEphemeral(ephemeral)
+    .then();
+
+// Error handling in reactive streams
+.onErrorResume(throwable -> {
+    log.error("Error in command: {}", throwable.getMessage());
+    return event.reply("An error occurred").withEphemeral(true);
+});
+```
+
+### **Database to Discord Response Flow**
+1. Command receives Discord event (Mono<ChatInputInteractionEvent>)
+2. Extract parameters and validate
+3. Call service layer (synchronous business logic)
+4. Transform result to Discord embed
+5. Return reactive response (Mono<Void>)
+
+## 🚀 **PERFORMANCE OPTIMIZATION**
+
+### **Caching Strategy**
+- **Method-level**: @Cacheable on frequently accessed data
+- **Entity-level**: JPA second-level cache configuration
+- **Application-level**: Caffeine cache for configuration data
+
+### **Database Optimization**
+- **Query Optimization**: Use @Query for complex queries
+- **Lazy Loading**: Optimize @OneToMany relationships
+- **Connection Pooling**: HikariCP configuration tuning
+
+## 🛠️ **DEVELOPMENT WORKFLOW**
+
+### **When Adding New Features**
+1. **Entity**: Create JPA entity with proper relationships
+2. **Repository**: Extend CrudRepository with custom queries
+3. **Service**: Implement business logic with @Transactional
+4. **Command**: Create Discord command with reactive response
+5. **Test**: Add comprehensive unit and integration tests
+
+### **When Modifying Existing Features**
+1. **Check Dependencies**: Review service layer interactions
+2. **Database Impact**: Consider migration requirements
+3. **Cache Impact**: Update cache keys if data structure changes
+4. **Discord Response**: Ensure embed formatting remains consistent
+
+### **Error Handling Patterns**
+```java
+// Service layer error handling
+@Override
+public Optional<Result> performAction(Long playerId) {
+    try {
+        // Business logic
+        return Optional.of(result);
+    } catch (EntityNotFoundException e) {
+        log.warn("Entity not found: {}", e.getMessage());
+        return Optional.empty();
+    } catch (Exception e) {
+        log.error("Unexpected error: {}", e.getMessage(), e);
+        throw new ServiceException("Action failed", e);
+    }
+}
+```
+
+## 🔍 **TROUBLESHOOTING COMMON PATTERNS**
+
+### **Database Issues**
+- Check entity relationships and join column configurations
+- Verify Flyway migration scripts for schema consistency
+- Review JPA logging to identify N+1 query problems
+
+### **Discord Integration Issues**
+- Verify slash command registration in DiscordConfig
+- Check reactive stream error handling and logging
+- Ensure proper event acknowledgment timing
+
+### **Configuration Issues**
+- Verify application.yml properties for database/Discord
+- Check cache configuration and key consistency
+- Review hot-reload mechanisms for configuration changes
+
+## 📊 **MONITORING & LOGGING**
+
+### **Logging Patterns**
+```java
+@Slf4j
+public class ExampleService {
+    public void performAction(String action, Long playerId) {
+        log.info("Starting action: {} for player: {}", action, playerId);
+        try {
+            // Action logic
+            log.debug("Action completed successfully");
+        } catch (Exception e) {
+            log.error("Action failed: {} for player: {}", action, playerId, e);
+            throw e;
+        }
+    }
+}
+```
+
+### **Performance Monitoring**
+- Use Spring Actuator for health checks and metrics
+- Monitor cache hit rates and database connection pool usage
+- Track Discord API rate limiting and response times
+
+## 🎯 **IMPLEMENTATION PRIORITIES**
+
+### **High Priority Features**
+1. **Core Gameplay**: Player progression, club management, trading
+2. **Database Integrity**: Proper relationships and constraints
+3. **Performance**: Caching and query optimization
+4. **Error Handling**: Comprehensive exception management
+
+### **Nice-to-Have Features**
+1. **Analytics**: Player behavior tracking and insights
+2. **Admin Tools**: Management interfaces and utilities
+3. **Extended Mechanics**: Additional mini-games and features
+
+---
+
+## 🤖 **AI ASSISTANT GUIDELINES**
+
+When working on this project:
+
+1. **Always check existing implementations** before creating new ones
+2. **Follow established patterns** for consistency
+3. **Consider database relationships** when making changes
+4. **Test reactive flows** for Discord integration
+5. **Maintain comprehensive error handling**
+6. **Update documentation** when adding features
+7. **Consider performance implications** of changes
+8. **Verify cache consistency** after modifications
+
+### **Code Quality Standards**
+- All public methods must have comprehensive JavaDoc
+- Exception handling must be explicit and logged appropriately
+- Database queries should be optimized and indexed
+- Discord embeds should follow consistent formatting
+- Configuration should be externalized and documented
+
+### **Testing Requirements**
+- Unit tests for all service layer methods
+- Integration tests for database operations
+- Mock testing for Discord command interactions
+- Performance testing for high-usage endpoints
+
+This project is **PRODUCTION READY** with enterprise-grade architecture and comprehensive feature implementation. All TODOs have been completed and the system is ready for deployment.

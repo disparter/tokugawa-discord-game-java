@@ -8,6 +8,7 @@ import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.models.Progress;
 import io.github.disparter.tokugawa.discord.core.models.Relationship;
 import io.github.disparter.tokugawa.discord.core.repositories.EventRepository;
+import io.github.disparter.tokugawa.discord.core.repositories.ItemRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.NPCRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.PlayerRepository;
 import io.github.disparter.tokugawa.discord.core.repositories.ProgressRepository;
@@ -38,13 +39,10 @@ public class EventServiceImpl implements EventService {
     private final NPCRepository npcRepository;
     private final RelationshipService relationshipService;
     private final GameCalendarService gameCalendarService;
+    private final InventoryService inventoryService;
+    private final ItemRepository itemRepository;
+    private final RomanceRouteConfigService romanceRouteConfigService;
     private final Random random = new Random();
-
-    // Romance route requirements - NPC ID to minimum affinity level
-    private final Map<Long, Integer> romanceRequirements = new HashMap<>();
-
-    // Romance route chapters - maps NPC ID to list of event IDs in order
-    private final Map<Long, List<String>> romanceChapters = new HashMap<>();
 
     @Autowired
     public EventServiceImpl(EventRepository eventRepository, 
@@ -52,54 +50,22 @@ public class EventServiceImpl implements EventService {
                            ProgressRepository progressRepository,
                            NPCRepository npcRepository,
                            RelationshipService relationshipService,
-                           GameCalendarService gameCalendarService) {
+                           GameCalendarService gameCalendarService,
+                           InventoryService inventoryService,
+                           ItemRepository itemRepository,
+                           RomanceRouteConfigService romanceRouteConfigService) {
         this.eventRepository = eventRepository;
         this.playerRepository = playerRepository;
         this.progressRepository = progressRepository;
         this.npcRepository = npcRepository;
         this.relationshipService = relationshipService;
         this.gameCalendarService = gameCalendarService;
-
-        // Initialize romance routes
-        initializeRomanceRoutes();
+        this.inventoryService = inventoryService;
+        this.itemRepository = itemRepository;
+        this.romanceRouteConfigService = romanceRouteConfigService;
     }
 
-    /**
-     * Initializes the romance routes with their requirements and chapters.
-     */
-    private void initializeRomanceRoutes() {
-        // For each romance-capable NPC, set the minimum affinity required
-        // and the sequence of events that make up their romance route
 
-        // Romance routes configuration - could be externalized to a config file or database
-        // Route 1
-        romanceRequirements.put(1L, 80); // NPC with ID 1 requires affinity 80
-        romanceChapters.put(1L, List.of("romance_1_1", "romance_1_2", "romance_1_3"));
-
-        // Route 2
-        romanceRequirements.put(2L, 80);
-        romanceChapters.put(2L, List.of("romance_2_1", "romance_2_2", "romance_2_3"));
-
-        // Route 3
-        romanceRequirements.put(3L, 80);
-        romanceChapters.put(3L, List.of("romance_3_1", "romance_3_2", "romance_3_3"));
-
-        // Route 4
-        romanceRequirements.put(4L, 80);
-        romanceChapters.put(4L, List.of("romance_4_1", "romance_4_2", "romance_4_3"));
-
-        // Route 5
-        romanceRequirements.put(5L, 80);
-        romanceChapters.put(5L, List.of("romance_5_1", "romance_5_2", "romance_5_3"));
-
-        // Route 6
-        romanceRequirements.put(6L, 80);
-        romanceChapters.put(6L, List.of("romance_6_1", "romance_6_2", "romance_6_3"));
-
-        // Route 7
-        romanceRequirements.put(7L, 80);
-        romanceChapters.put(7L, List.of("romance_7_1", "romance_7_2", "romance_7_3"));
-    }
 
     @Override
     public Event findById(Long id) {
@@ -527,14 +493,15 @@ public class EventServiceImpl implements EventService {
                 return false;
             }
 
-            Integer requiredAffinity = romanceRequirements.get(npcId);
-            if (requiredAffinity == null) {
+            Optional<Integer> requiredAffinityOpt = romanceRouteConfigService.getRequiredAffinity(npcId);
+            if (requiredAffinityOpt.isEmpty()) {
                 return false;
             }
+            Integer requiredAffinity = requiredAffinityOpt.get();
 
             // Check if player has completed previous chapters in this romance route
-            List<String> chapters = romanceChapters.get(npcId);
-            if (chapters == null) {
+            List<String> chapters = romanceRouteConfigService.getChapterSequence(npcId);
+            if (chapters.isEmpty()) {
                 return false;
             }
 
@@ -835,11 +802,25 @@ public class EventServiceImpl implements EventService {
                     // Add the item to the player's inventory
                     try {
                         Long itemId = Long.parseLong(valueStr);
-                        // This would typically use an InventoryService to add the item
-                        // For now, we'll log the successful application
-                        log.info("Applied item reward with ID {} to player {}", itemId, player.getId());
-                        // TODO: Implement actual item addition via InventoryService
-                        // inventoryService.addItemToInventory(player, itemId, 1);
+                        
+                        // Get the item from repository
+                        itemRepository.findById(itemId).ifPresentOrElse(
+                            item -> {
+                                try {
+                                    // Add item to player's inventory
+                                    inventoryService.addItemToInventory(player, item, 1);
+                                    log.info("Successfully added item {} (ID: {}) to player {}'s inventory", 
+                                            item.getName(), itemId, player.getId());
+                                } catch (IllegalStateException e) {
+                                    log.warn("Failed to add item {} to player {} - inventory full: {}", 
+                                            itemId, player.getId(), e.getMessage());
+                                } catch (Exception e) {
+                                    log.error("Unexpected error adding item {} to player {} inventory: {}", 
+                                            itemId, player.getId(), e.getMessage());
+                                }
+                            },
+                            () -> log.warn("Item with ID {} not found in database", itemId)
+                        );
                     } catch (NumberFormatException e) {
                         log.warn("Invalid item ID format: {}", valueStr);
                     }
