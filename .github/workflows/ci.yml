@@ -176,7 +176,6 @@ jobs:
           path: |
             javaapp/build/test-results/test/*.xml
             javaapp/build/test-results/functionalTest/*.xml
-            javaapp/target/cucumber-reports/Cucumber.xml
           reporter: java-junit
 
       - name: Upload Test Results
@@ -187,7 +186,6 @@ jobs:
           path: |
             javaapp/build/reports/
             javaapp/build/test-results/
-            javaapp/target/cucumber-reports/
           retention-days: 7
 
       - name: Upload Coverage Reports
@@ -207,7 +205,6 @@ jobs:
           files: |
             javaapp/build/test-results/test/*.xml
             javaapp/build/test-results/functionalTest/*.xml
-            javaapp/target/cucumber-reports/Cucumber.xml
           comment_mode: create new
           check_name: "Test Results"
           report_individual_runs: true
