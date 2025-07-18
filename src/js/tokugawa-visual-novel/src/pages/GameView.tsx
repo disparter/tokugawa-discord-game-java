@@ -7,19 +7,19 @@ import {
   LinearProgress,
   IconButton,
   Fade,
-  Slide,
-  Dialog,
+
   DialogTitle,
   DialogContent,
   DialogActions,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
 } from '@mui/material';
 import {
   VolumeUp,
   VolumeOff,
-  Settings,
+
   Save,
   Menu,
   SkipNext,
@@ -30,14 +30,21 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useGameStore } from '../store/gameStore';
-import { apiClient } from '../services/apiClient';
-import type { Chapter, Event, Choice, Scene, Dialog } from '../types';
+import { useGameStore } from '../stores/gameStore';
+import { apiClient } from '../services/api/client';
+import type { Chapter, Event, Choice, Scene } from '../types';
+
+interface DialogInterface {
+  id: string;
+  text: string;
+  speaker?: string;
+  choices?: Choice[];
+}
 
 interface GameState {
   currentChapter: Chapter | null;
   currentEvent: Event | null;
-  currentDialog: Dialog | null;
+  currentDialog: DialogInterface | null;
   dialogIndex: number;
   choices: Choice[];
   scene: Scene | null;
@@ -49,7 +56,7 @@ interface GameState {
 
 const GameView: React.FC = () => {
   const navigate = useNavigate();
-  const { progress, settings, saveGame, loadGame } = useGameStore();
+  const { saveGame, loadGame } = useGameStore();
   const [gameState, setGameState] = useState<GameState>({
     currentChapter: null,
     currentEvent: null,
@@ -105,12 +112,12 @@ const GameView: React.FC = () => {
       setTypewriterText('');
       let index = 0;
       const timer = setInterval(() => {
-        if (index < gameState.currentDialog.text.length) {
-          setTypewriterText(prev => prev + gameState.currentDialog.text[index]);
+        if (gameState.currentDialog && index < gameState.currentDialog.text.length) {
+          setTypewriterText(prev => prev + gameState.currentDialog!.text[index]);
           index++;
         } else {
           clearInterval(timer);
-          if (gameState.currentDialog.choices?.length > 0) {
+          if (gameState.currentDialog?.choices?.length > 0) {
             setTimeout(() => setShowChoices(true), 500);
           }
         }
@@ -335,7 +342,7 @@ const GameView: React.FC = () => {
                     transition={{ duration: 0.3 }}
                     className="space-y-2"
                   >
-                    {gameState.currentDialog.choices.map((choice, index) => (
+                    {gameState.currentDialog.choices.map((choice: Choice, index: number) => (
                       <motion.div
                         key={choice.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -400,33 +407,41 @@ const GameView: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <List>
-            <ListItem button onClick={handleSaveGame}>
+            <ListItem>
+              <ListItemButton onClick={handleSaveGame}>
               <ListItemText
                 primary="Save Game"
                 secondary="Save your current progress"
-                className="text-white"
-              />
+                                  className="text-white"
+                />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={handleLoadGame}>
+            <ListItem>
+              <ListItemButton onClick={handleLoadGame}>
               <ListItemText
                 primary="Load Game"
                 secondary="Load a previous save"
-                className="text-white"
-              />
+                                  className="text-white"
+                />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={() => navigate('/settings')}>
+            <ListItem>
+              <ListItemButton onClick={() => navigate('/settings')}>
               <ListItemText
                 primary="Settings"
                 secondary="Configure game options"
-                className="text-white"
-              />
+                                  className="text-white"
+                />
+              </ListItemButton>
             </ListItem>
-            <ListItem button onClick={handleReturnToDashboard}>
+            <ListItem>
+              <ListItemButton onClick={handleReturnToDashboard}>
               <ListItemText
                 primary="Return to Dashboard"
                 secondary="Exit to main menu"
-                className="text-white"
-              />
+                                  className="text-white"
+                />
+              </ListItemButton>
             </ListItem>
           </List>
         </DialogContent>

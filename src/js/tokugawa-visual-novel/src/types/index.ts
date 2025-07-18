@@ -81,6 +81,10 @@ export interface Progress {
   choicesMade: Record<string, string>;
   flags: Record<string, boolean>;
   variables: Record<string, any>;
+  chaptersCompleted: number;
+  relationshipsFormed: number;
+  playtimeHours: number;
+  playtimeMinutes: number;
 }
 
 export interface Event {
@@ -94,6 +98,7 @@ export interface Event {
   isActive: boolean;
   startDate?: Date;
   endDate?: Date;
+  totalDialogs?: number;
 }
 
 export const EventType = {
@@ -328,16 +333,23 @@ export interface Scene {
   title: string;
   description: string;
   backgroundImage: string;
+  background?: string;
+  image: string;
   backgroundMusic?: string;
   characters: SceneCharacter[];
   dialogs: Dialog[];
   effects: SceneEffect[];
   choices?: Choice[];
   nextScene?: string;
+  chapter: string;
+  unlocked: boolean;
+  unlockDate?: string;
 }
 
 export interface SceneCharacter {
+  id: string;
   npcId: string;
+  name: string;
   position: 'left' | 'center' | 'right';
   sprite: string;
   emotion: string;
@@ -350,6 +362,40 @@ export interface CharacterEffect {
   type: 'fade' | 'slide' | 'bounce' | 'glow';
   duration: number;
   delay?: number;
+}
+
+export interface Character {
+  id: string;
+  name: string;
+  description: string;
+  portrait: string;
+  unlocked: boolean;
+  traits?: string[];
+}
+
+export interface Music {
+  id: string;
+  title: string;
+  composer: string;
+  duration: string;
+  cover: string;
+  unlocked: boolean;
+}
+
+export interface GalleryItem {
+  id: string;
+  title?: string;
+  name?: string;
+  description: string;
+  image?: string;
+  portrait?: string;
+  type: 'character' | 'scene' | 'music';
+  url?: string;
+  isUnlocked: boolean;
+  unlockCondition?: string;
+  unlockDate?: string;
+  tags?: string[];
+  category?: string;
 }
 
 export interface SceneEffect {

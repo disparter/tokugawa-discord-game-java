@@ -3,7 +3,6 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
   Card,
   CardContent,
   CardActions,
@@ -17,26 +16,24 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  IconButton,
 } from '@mui/material';
+import { Grid } from '@mui/material';
 import {
   PlayArrow,
-  BookOpen,
+  MenuBook,
   Photo,
   Settings,
-  TrendingUp,
   Favorite,
   Group,
   EmojiEvents,
   History,
-  Notifications,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { useGameStore } from '../store/gameStore';
-import { apiClient } from '../services/apiClient';
-import type { User, Player, Progress } from '../types';
+import { useAuthStore } from '../stores/authStore';
+import { useGameStore } from '../stores/gameStore';
+import { apiClient } from '../services/api/client';
+import type { Player, Progress } from '../types';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -52,14 +49,14 @@ const Dashboard: React.FC = () => {
         
         // Fetch user's player data
         const playerResponse = await apiClient.get('/api/players/me');
-        if (playerResponse.data.success) {
-          setPlayer(playerResponse.data.data);
+        if ((playerResponse.data as any).success) {
+          setPlayer((playerResponse.data as any).data);
         }
 
         // Fetch user's progress
         const progressResponse = await apiClient.get('/api/story/progress');
-        if (progressResponse.data.success) {
-          setProgress(progressResponse.data.data);
+        if ((progressResponse.data as any).success) {
+          setProgress((progressResponse.data as any).data);
         }
 
         // Mock recent activity for now
@@ -249,7 +246,7 @@ const Dashboard: React.FC = () => {
                     <Grid item xs={12} sm={6} md={3}>
                       <Card className="glass-card hover:scale-105 transition-transform cursor-pointer">
                         <CardContent className="text-center">
-                          <BookOpen className="text-primary-400 mb-2" sx={{ fontSize: 40 }} />
+                          <MenuBook className="text-primary-400 mb-2" sx={{ fontSize: 40 }} />
                           <Typography variant="h6" className="text-primary-400">
                             Story
                           </Typography>
@@ -316,7 +313,7 @@ const Dashboard: React.FC = () => {
                         Choices Made
                       </Typography>
                       <Typography variant="body2" className="text-primary-400">
-                        {progress?.choicesMade || 0}
+                        {typeof progress?.choicesMade === 'object' ? Object.keys(progress.choicesMade).length : 0}
                       </Typography>
                     </Box>
 

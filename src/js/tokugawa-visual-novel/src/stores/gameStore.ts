@@ -86,6 +86,8 @@ interface GameStore extends GameState {
   setCurrentSaveSlot: (slotId: string | null) => void;
   createSaveSlot: (name: string) => void;
   deleteSaveSlot: (slotId: string) => void;
+  saveGame: () => Promise<void>;
+  loadGame: (slotId?: string) => Promise<void>;
   
   // Error Handling
   setError: (error: string | null) => void;
@@ -321,6 +323,41 @@ export const useGameStore = create<GameStore>()(
           currentSaveSlot: null,
           error: null,
         }),
+
+      saveGame: async () => {
+        // Implementation for saving game state
+        const state = get();
+        const saveData = {
+          player: state.player,
+          progress: state.progress,
+          inventory: state.inventory,
+          relationships: state.relationships,
+          currentChapter: state.currentChapter,
+          currentScene: state.currentScene,
+          currentDialog: state.currentDialog,
+          timestamp: new Date().toISOString(),
+        };
+        
+        // Save to localStorage or API
+        localStorage.setItem('tokugawa-game-save', JSON.stringify(saveData));
+      },
+
+      loadGame: async (slotId?: string) => {
+        // Implementation for loading game state
+        const savedData = localStorage.getItem('tokugawa-game-save');
+        if (savedData) {
+          const saveData = JSON.parse(savedData);
+          set({
+            player: saveData.player,
+            progress: saveData.progress,
+            inventory: saveData.inventory,
+            relationships: saveData.relationships,
+            currentChapter: saveData.currentChapter,
+            currentScene: saveData.currentScene,
+            currentDialog: saveData.currentDialog,
+          });
+        }
+      },
     }),
     {
       name: 'tokugawa-game',

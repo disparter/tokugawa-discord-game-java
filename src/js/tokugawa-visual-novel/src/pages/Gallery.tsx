@@ -3,7 +3,7 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
+
   Card,
   CardMedia,
   CardContent,
@@ -16,8 +16,9 @@ import {
   Chip,
   LinearProgress,
   Button,
-  Fade,
-} from '@mui/material';
+
+  } from '@mui/material';
+import { Grid } from '@mui/material';
 import {
   Close,
   Favorite,
@@ -28,11 +29,11 @@ import {
   VolumeOff,
   Download,
   Share,
-  Fullscreen,
+
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore } from '../store/gameStore';
-import { apiClient } from '../services/apiClient';
+import { useGameStore } from '../stores/gameStore';
+import { apiClient } from '../services/api/client';
 import type { GalleryItem, Character, Scene, Music } from '../types';
 
 interface TabPanelProps {
@@ -48,7 +49,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
 );
 
 const Gallery: React.FC = () => {
-  const { progress } = useGameStore();
+  const { } = useGameStore();
   const [tabValue, setTabValue] = useState(0);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -67,20 +68,20 @@ const Gallery: React.FC = () => {
         
         // Fetch unlocked characters
         const charactersResponse = await apiClient.get('/api/gallery/characters');
-        if (charactersResponse.data.success) {
-          setCharacters(charactersResponse.data.data);
+        if ((charactersResponse.data as any).success) {
+          setCharacters((charactersResponse.data as any).data);
         }
 
         // Fetch unlocked scenes
         const scenesResponse = await apiClient.get('/api/gallery/scenes');
-        if (scenesResponse.data.success) {
-          setScenes(scenesResponse.data.data);
+        if ((scenesResponse.data as any).success) {
+          setScenes((scenesResponse.data as any).data);
         }
 
         // Fetch unlocked music
         const musicResponse = await apiClient.get('/api/gallery/music');
-        if (musicResponse.data.success) {
-          setMusic(musicResponse.data.data);
+        if ((musicResponse.data as any).success) {
+          setMusic((musicResponse.data as any).data);
         }
 
         // Load favorites from localStorage
@@ -98,7 +99,7 @@ const Gallery: React.FC = () => {
     fetchGalleryData();
   }, []);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -244,7 +245,7 @@ const Gallery: React.FC = () => {
                         </Typography>
                         {character.unlocked && (
                           <Box className="flex flex-wrap gap-1">
-                            {character.traits?.map((trait) => (
+                            {character.traits?.map((trait: string) => (
                               <Chip
                                 key={trait}
                                 label={trait}

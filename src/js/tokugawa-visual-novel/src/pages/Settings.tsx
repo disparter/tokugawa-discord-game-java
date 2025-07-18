@@ -3,7 +3,7 @@ import {
   Container,
   Typography,
   Paper,
-  Grid,
+
   Box,
   Switch,
   Slider,
@@ -22,34 +22,28 @@ import {
   TextField,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
   Chip,
-} from '@mui/material';
+  } from '@mui/material';
+import { Grid } from '@mui/material';
 import {
   VolumeUp,
-  VolumeOff,
   Brightness4,
-  Brightness7,
   Language,
-  Speed,
   Save,
   Restore,
   Delete,
   Download,
   Upload,
   AccountCircle,
-  Security,
   Notifications,
-  Gamepad2,
-  Palette,
-  TextFields,
+  Gamepad,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '../store/authStore';
-import { useGameStore } from '../store/gameStore';
-import { apiClient } from '../services/apiClient';
+import { useAuthStore } from '../stores/authStore';
+import { useGameStore } from '../stores/gameStore';
+import { apiClient } from '../services/api/client';
 
 interface GameSettings {
   // Audio Settings
@@ -83,7 +77,7 @@ interface GameSettings {
 
 const Settings: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { settings: gameStoreSettings, updateSettings } = useGameStore();
+  const { updateSettings } = useGameStore();
   const [settings, setSettings] = useState<GameSettings>({
     masterVolume: 80,
     musicVolume: 70,
@@ -210,7 +204,7 @@ const Settings: React.FC = () => {
   const sections = [
     { id: 'audio', label: 'Audio', icon: <VolumeUp /> },
     { id: 'visual', label: 'Visual', icon: <Brightness4 /> },
-    { id: 'gameplay', label: 'Gameplay', icon: <Gamepad2 /> },
+    { id: 'gameplay', label: 'Gameplay', icon: <Gamepad /> },
     { id: 'language', label: 'Language', icon: <Language /> },
     { id: 'notifications', label: 'Notifications', icon: <Notifications /> },
     { id: 'account', label: 'Account', icon: <AccountCircle /> },
@@ -241,21 +235,21 @@ const Settings: React.FC = () => {
               </Typography>
               <List>
                 {sections.map((section) => (
-                  <ListItem
-                    key={section.id}
-                    button
-                    selected={activeSection === section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`mb-2 rounded ${
-                      activeSection === section.id
-                        ? 'bg-primary-600/20 text-primary-400'
-                        : 'text-gray-300 hover:bg-primary-600/10'
-                    }`}
-                  >
-                    <Box className="flex items-center gap-3">
-                      {section.icon}
-                      <Typography variant="body1">{section.label}</Typography>
-                    </Box>
+                  <ListItem key={section.id} className="mb-2 rounded">
+                    <ListItemButton
+                      selected={activeSection === section.id}
+                      onClick={() => setActiveSection(section.id)}
+                      className={
+                        activeSection === section.id
+                          ? 'bg-primary-600/20 text-primary-400'
+                          : 'text-gray-300 hover:bg-primary-600/10'
+                      }
+                    >
+                                          <Box className="flex items-center gap-3">
+                        {section.icon}
+                        <Typography variant="body1">{section.label}</Typography>
+                      </Box>
+                    </ListItemButton>
                   </ListItem>
                 ))}
               </List>
@@ -598,7 +592,7 @@ const Settings: React.FC = () => {
                               {user?.email}
                             </Typography>
                             <Box className="flex gap-2 mt-2">
-                              {user?.roles?.map((role) => (
+                              {user?.roles?.map((role: string) => (
                                 <Chip
                                   key={role}
                                   label={role}
