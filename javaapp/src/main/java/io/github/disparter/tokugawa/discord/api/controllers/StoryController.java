@@ -1,271 +1,288 @@
 package io.github.disparter.tokugawa.discord.api.controllers;
 
 import io.github.disparter.tokugawa.discord.api.dtos.ApiResponseDto;
-import io.github.disparter.tokugawa.discord.api.dtos.ChapterDto;
-import io.github.disparter.tokugawa.discord.api.dtos.ChoiceRequestDto;
-import io.github.disparter.tokugawa.discord.api.dtos.EventDto;
-import io.github.disparter.tokugawa.discord.api.dtos.ProgressDto;
 import io.github.disparter.tokugawa.discord.core.models.Chapter;
 import io.github.disparter.tokugawa.discord.core.models.Event;
+import io.github.disparter.tokugawa.discord.core.models.Player;
 import io.github.disparter.tokugawa.discord.core.models.Progress;
+import io.github.disparter.tokugawa.discord.core.services.ChapterService;
 import io.github.disparter.tokugawa.discord.core.services.EventService;
-import io.github.disparter.tokugawa.discord.core.services.NarrativeService;
+import io.github.disparter.tokugawa.discord.core.services.PlayerService;
 import io.github.disparter.tokugawa.discord.core.services.ProgressService;
-
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
 
 /**
- * REST controller for story mode API endpoints.
+ * REST controller for story API endpoints.
  */
 @RestController
 @RequestMapping("/api/story")
-@Tag(name = "Story", description = "Story mode API endpoints")
+@Tag(name = "Story", description = "Story API endpoints")
+@Slf4j
 public class StoryController {
 
-    private final NarrativeService narrativeService;
-    private final ProgressService progressService;
-    private final EventService eventService;
+    @Autowired
+    private ChapterService chapterService;
 
     @Autowired
-    public StoryController(NarrativeService narrativeService, ProgressService progressService, EventService eventService) {
-        this.narrativeService = narrativeService;
-        this.progressService = progressService;
-        this.eventService = eventService;
-    }
+    private EventService eventService;
 
-    /**
-     * Get all available chapters.
-     *
-     * @return list of all chapters
-     */
-    @Operation(summary = "Get all chapters", description = "Returns a list of all available chapters in the game")
+    @Autowired
+    private PlayerService playerService;
+
+    @Autowired
+    private ProgressService progressService;
+
+    @Operation(summary = "Get all chapters")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Chapters retrieved successfully",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class)))
+        @ApiResponse(responseCode = "200", description = "Chapters retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @GetMapping("/chapters")
-    public ResponseEntity<ApiResponseDto<List<ChapterDto>>> getAllChapters() {
-        List<Chapter> chapters = narrativeService.getAllChapters();
-        List<ChapterDto> chapterDtos = chapters.stream()
-                .map(ChapterDto::fromEntity)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(ApiResponseDto.success(chapterDtos));
-    }
-
-    /**
-     * Get a specific chapter by ID.
-     *
-     * @param id the chapter ID
-     * @return the chapter details
-     */
-    @Operation(summary = "Get chapter by ID", description = "Returns the details of a specific chapter")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Chapter found",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class))),
-        @ApiResponse(responseCode = "200", description = "Chapter not found (with error message)",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class)))
-    })
-    @GetMapping("/chapters/{id}")
-    public ResponseEntity<ApiResponseDto<ChapterDto>> getChapterById(
-            @Parameter(description = "ID of the chapter to retrieve", required = true)
-            @PathVariable Long id) {
-        Chapter chapter = narrativeService.findChapterById(id);
-
-        if (chapter == null) {
-            return ResponseEntity.ok(ApiResponseDto.error("Chapter not found"));
-        }
-
-        return ResponseEntity.ok(ApiResponseDto.success(ChapterDto.fromEntity(chapter)));
-    }
-
-    /**
-     * Start a chapter for a player.
-     *
-     * @param id the chapter ID
-     * @param playerId the player ID
-     * @return the started chapter
-     */
-    @Operation(summary = "Start a chapter", description = "Starts a specific chapter for a player")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Chapter started successfully",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class))),
-        @ApiResponse(responseCode = "200", description = "Failed to start chapter (with error message)",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class)))
-    })
-    @PostMapping("/chapters/{id}/start")
-    public ResponseEntity<ApiResponseDto<ChapterDto>> startChapter(
-            @Parameter(description = "ID of the chapter to start", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "ID of the player", required = true)
-            @RequestParam Long playerId) {
-
+    public ResponseEntity<ApiResponseDto<List<Chapter>>> getChapters() {
         try {
-            Chapter chapter = narrativeService.startChapter(id, playerId);
-            return ResponseEntity.ok(ApiResponseDto.success("Chapter started successfully", ChapterDto.fromEntity(chapter)));
+            List<Chapter> chapters = chapterService.getAllChapters();
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Chapters retrieved successfully", chapters));
         } catch (Exception e) {
-            return ResponseEntity.ok(ApiResponseDto.error("Failed to start chapter: " + e.getMessage()));
+            log.error("Error retrieving chapters: {}", e.getMessage());
+            return ResponseEntity.status(500).body(
+                new ApiResponseDto<>(false, "Internal server error", null)
+            );
         }
     }
 
-    /**
-     * Make a choice in a chapter.
-     *
-     * @param id the chapter ID
-     * @param request the choice request
-     * @return the updated progress
-     */
-    @Operation(summary = "Make a choice in a chapter", description = "Allows a player to make a choice in a specific chapter")
+    @Operation(summary = "Get current chapter for user")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Choice recorded successfully",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class))),
-        @ApiResponse(responseCode = "200", description = "Failed to record choice (with error message)",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class)))
+        @ApiResponse(responseCode = "200", description = "Current chapter retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Chapter not found")
     })
-    @PostMapping("/chapters/{id}/choices")
-    public ResponseEntity<ApiResponseDto<ProgressDto>> makeChoice(
-            @Parameter(description = "ID of the chapter", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "Choice request containing player ID and choice ID", required = true)
-            @RequestBody ChoiceRequestDto request) {
-
+    @GetMapping("/current-chapter")
+    public ResponseEntity<ApiResponseDto<Chapter>> getCurrentChapter(@AuthenticationPrincipal UserDetails userDetails) {
         try {
-            // Update progress with the player's choice
-            Progress progress = progressService.getSpecificProgress(request.getPlayerId(), id, "CHAPTER");
-
-            if (progress == null) {
-                return ResponseEntity.ok(ApiResponseDto.error("No progress found for this chapter"));
+            Optional<Player> playerOpt = playerService.getPlayerByUsername(userDetails.getUsername());
+            if (playerOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(
+                    new ApiResponseDto<>(false, "Player not found", null)
+                );
             }
 
-            // Add the choice to the player's progress
-            progress.getChoices().put(id.toString(), request.getChoiceId());
-            progress = progressService.save(progress);
+            Player player = playerOpt.get();
+            Optional<Progress> progressOpt = progressService.getProgressByPlayerId(player.getId());
+            
+            if (progressOpt.isEmpty()) {
+                // Return first chapter if no progress exists
+                Optional<Chapter> firstChapter = chapterService.getChapterById("chapter_1");
+                if (firstChapter.isPresent()) {
+                    return ResponseEntity.ok(new ApiResponseDto<>(true, "Current chapter retrieved successfully", firstChapter.get()));
+                } else {
+                    return ResponseEntity.status(404).body(
+                        new ApiResponseDto<>(false, "No chapters available", null)
+                    );
+                }
+            }
 
-            // Get completion percentage
-            double completionPercentage = progressService.getCompletionPercentage(request.getPlayerId());
-
-            return ResponseEntity.ok(ApiResponseDto.success(
-                    "Choice recorded successfully",
-                    ProgressDto.fromEntity(progress, completionPercentage)));
+            Progress progress = progressOpt.get();
+            Optional<Chapter> currentChapter = chapterService.getChapterById(progress.getCurrentChapterId());
+            
+            if (currentChapter.isPresent()) {
+                return ResponseEntity.ok(new ApiResponseDto<>(true, "Current chapter retrieved successfully", currentChapter.get()));
+            } else {
+                return ResponseEntity.status(404).body(
+                    new ApiResponseDto<>(false, "Current chapter not found", null)
+                );
+            }
         } catch (Exception e) {
-            return ResponseEntity.ok(ApiResponseDto.error("Failed to record choice: " + e.getMessage()));
+            log.error("Error retrieving current chapter: {}", e.getMessage());
+            return ResponseEntity.status(500).body(
+                new ApiResponseDto<>(false, "Internal server error", null)
+            );
         }
     }
 
-    /**
-     * Get player progress.
-     *
-     * @param playerId the player ID
-     * @return the player's progress
-     */
-    @Operation(summary = "Get player progress", description = "Returns the player's progress in the story")
+    @Operation(summary = "Get current event for user")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Progress retrieved successfully",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class))),
-        @ApiResponse(responseCode = "200", description = "No progress found (with error message)",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class)))
+        @ApiResponse(responseCode = "200", description = "Current event retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Event not found")
+    })
+    @GetMapping("/current-event")
+    public ResponseEntity<ApiResponseDto<Event>> getCurrentEvent(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Optional<Player> playerOpt = playerService.getPlayerByUsername(userDetails.getUsername());
+            if (playerOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(
+                    new ApiResponseDto<>(false, "Player not found", null)
+                );
+            }
+
+            Player player = playerOpt.get();
+            List<Event> activeEvents = eventService.getActiveEventsForPlayer(player.getId());
+            
+            if (!activeEvents.isEmpty()) {
+                Event currentEvent = activeEvents.get(0); // Get the first active event
+                return ResponseEntity.ok(new ApiResponseDto<>(true, "Current event retrieved successfully", currentEvent));
+            } else {
+                return ResponseEntity.status(404).body(
+                    new ApiResponseDto<>(false, "No active events found", null)
+                );
+            }
+        } catch (Exception e) {
+            log.error("Error retrieving current event: {}", e.getMessage());
+            return ResponseEntity.status(500).body(
+                new ApiResponseDto<>(false, "Internal server error", null)
+            );
+        }
+    }
+
+    @Operation(summary = "Get user progress")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Progress retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Progress not found")
     })
     @GetMapping("/progress")
-    public ResponseEntity<ApiResponseDto<ProgressDto>> getPlayerProgress(
-            @Parameter(description = "ID of the player", required = true)
-            @RequestParam Long playerId) {
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getProgress(@AuthenticationPrincipal UserDetails userDetails) {
         try {
-            List<Progress> progressList = progressService.getPlayerProgress(playerId);
-
-            if (progressList.isEmpty()) {
-                return ResponseEntity.ok(ApiResponseDto.error("No progress found for this player"));
+            Optional<Player> playerOpt = playerService.getPlayerByUsername(userDetails.getUsername());
+            if (playerOpt.isEmpty()) {
+                return ResponseEntity.status(404).body(
+                    new ApiResponseDto<>(false, "Player not found", null)
+                );
             }
 
-            // Get the first progress record (assuming one player has one progress record)
-            Progress progress = progressList.get(0);
+            Player player = playerOpt.get();
+            Optional<Progress> progressOpt = progressService.getProgressByPlayerId(player.getId());
+            
+            if (progressOpt.isEmpty()) {
+                // Create default progress
+                Map<String, Object> defaultProgress = Map.of(
+                    "id", 0,
+                    "playerId", player.getId(),
+                    "currentChapterId", "chapter_1",
+                    "completedChapters", List.of(),
+                    "currentSceneId", "scene_1",
+                    "lastSaveDate", System.currentTimeMillis(),
+                    "totalPlayTime", 0,
+                    "choicesMade", Map.of(),
+                    "flags", Map.of(),
+                    "variables", Map.of(),
+                    "chaptersCompleted", 0,
+                    "relationshipsFormed", 0,
+                    "playtimeHours", 0,
+                    "playtimeMinutes", 0
+                );
+                
+                return ResponseEntity.ok(new ApiResponseDto<>(true, "Default progress retrieved successfully", defaultProgress));
+            }
 
-            // Get completion percentage
-            double completionPercentage = progressService.getCompletionPercentage(playerId);
-
-            return ResponseEntity.ok(ApiResponseDto.success(
-                    ProgressDto.fromEntity(progress, completionPercentage)));
+            Progress progress = progressOpt.get();
+            Map<String, Object> progressData = Map.of(
+                "id", progress.getId(),
+                "playerId", progress.getPlayerId(),
+                "currentChapterId", progress.getCurrentChapterId(),
+                "completedChapters", progress.getCompletedChapters(),
+                "currentSceneId", progress.getCurrentSceneId(),
+                "lastSaveDate", progress.getLastSaveDate(),
+                "totalPlayTime", progress.getTotalPlayTime(),
+                "choicesMade", progress.getChoicesMade(),
+                "flags", progress.getFlags(),
+                "variables", progress.getVariables(),
+                "chaptersCompleted", progress.getCompletedChapters().size(),
+                "relationshipsFormed", 3, // Mock data
+                "playtimeHours", progress.getTotalPlayTime() / 3600,
+                "playtimeMinutes", (progress.getTotalPlayTime() % 3600) / 60
+            );
+            
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Progress retrieved successfully", progressData));
         } catch (Exception e) {
-            return ResponseEntity.ok(ApiResponseDto.error("Failed to get progress: " + e.getMessage()));
+            log.error("Error retrieving progress: {}", e.getMessage());
+            return ResponseEntity.status(500).body(
+                new ApiResponseDto<>(false, "Internal server error", null)
+            );
         }
     }
 
-    /**
-     * Get all available events.
-     *
-     * @return list of all events
-     */
-    @Operation(summary = "Get all events", description = "Returns a list of all available events in the game")
+    @Operation(summary = "Make a choice in the story")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Events retrieved successfully",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class)))
+        @ApiResponse(responseCode = "200", description = "Choice made successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Choice not found")
     })
-    @GetMapping("/events")
-    public ResponseEntity<ApiResponseDto<List<EventDto>>> getAllEvents() {
-        List<Event> events = eventService.getAllEvents();
-        List<EventDto> eventDtos = events.stream()
-                .map(EventDto::fromEntity)
-                .collect(Collectors.toList());
+    @PostMapping("/choice")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> makeChoice(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map<String, String> request) {
+        try {
+            String choiceId = request.get("choiceId");
+            if (choiceId == null || choiceId.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                    new ApiResponseDto<>(false, "Choice ID is required", null)
+                );
+            }
 
-        return ResponseEntity.ok(ApiResponseDto.success(eventDtos));
+            // Mock response for now - in real implementation, this would process the choice
+            Map<String, Object> nextDialog = Map.of(
+                "id", "dialog_" + System.currentTimeMillis(),
+                "text", "You made an interesting choice! The story continues...",
+                "speaker", "Narrator",
+                "choices", List.of()
+            );
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Choice made successfully", nextDialog));
+        } catch (Exception e) {
+            log.error("Error making choice: {}", e.getMessage());
+            return ResponseEntity.status(500).body(
+                new ApiResponseDto<>(false, "Internal server error", null)
+            );
+        }
     }
 
-    /**
-     * Trigger an event for a player.
-     *
-     * @param id the event ID
-     * @param playerId the player ID
-     * @return the triggered event
-     */
-    @Operation(summary = "Trigger an event", description = "Triggers a specific event for a player")
+    @Operation(summary = "Get next dialog")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Event triggered successfully",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class))),
-        @ApiResponse(responseCode = "200", description = "Failed to trigger event (with error message)",
-                content = @Content(mediaType = "application/json",
-                schema = @Schema(implementation = ApiResponseDto.class)))
+        @ApiResponse(responseCode = "200", description = "Next dialog retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    @PostMapping("/events/{id}/trigger")
-    public ResponseEntity<ApiResponseDto<EventDto>> triggerEvent(
-            @Parameter(description = "ID of the event to trigger", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "ID of the player", required = true)
-            @RequestParam Long playerId) {
-
+    @GetMapping("/next-dialog")
+    public ResponseEntity<ApiResponseDto<Map<String, Object>>> getNextDialog(@AuthenticationPrincipal UserDetails userDetails) {
         try {
-            Event event = eventService.triggerEvent(id, playerId);
-            return ResponseEntity.ok(ApiResponseDto.success("Event triggered successfully", EventDto.fromEntity(event)));
+            // Mock response for now - in real implementation, this would get the next dialog
+            Map<String, Object> nextDialog = Map.of(
+                "id", "dialog_" + System.currentTimeMillis(),
+                "text", "The story continues with new adventures ahead...",
+                "speaker", "Narrator",
+                "choices", List.of(
+                    Map.of(
+                        "id", "choice_1",
+                        "text", "Continue the adventure",
+                        "consequence", "POSITIVE"
+                    ),
+                    Map.of(
+                        "id", "choice_2",
+                        "text", "Take a different path",
+                        "consequence", "NEUTRAL"
+                    )
+                )
+            );
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "Next dialog retrieved successfully", nextDialog));
         } catch (Exception e) {
-            return ResponseEntity.ok(ApiResponseDto.error("Failed to trigger event: " + e.getMessage()));
+            log.error("Error retrieving next dialog: {}", e.getMessage());
+            return ResponseEntity.status(500).body(
+                new ApiResponseDto<>(false, "Internal server error", null)
+            );
         }
     }
 }
