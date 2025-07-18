@@ -14,12 +14,20 @@ import java.util.Optional;
 public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     /**
+     * Find a player by their user's Discord ID.
+     *
+     * @param discordId the Discord ID
+     * @return the player, if found
+     */
+    Optional<Player> findByUserDiscordId(String discordId);
+
+    /**
      * Find a player by their user ID.
      *
      * @param userId the user ID
      * @return the player, if found
      */
-    Optional<Player> findByUserId(String userId);
+    Optional<Player> findByUserId(Long userId);
 
     /**
      * Find a player by their name.
